@@ -116,7 +116,7 @@ export function StepOne({ userId, onComplete }: StepOneProps) {
             {...register('name')}
             type="text"
             id="name"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
             placeholder="My Real Estate Business"
           />
           {errors.name && (
@@ -132,7 +132,7 @@ export function StepOne({ userId, onComplete }: StepOneProps) {
             {...register('domain')}
             type="text"
             id="domain"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
             placeholder="example.com"
             onChange={(e) => {
               const sanitized = sanitizeDomain(e.target.value)
@@ -155,7 +155,7 @@ export function StepOne({ userId, onComplete }: StepOneProps) {
             {...register('description')}
             id="description"
             rows={3}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
             placeholder="Brief description of your website..."
           />
           {errors.description && (

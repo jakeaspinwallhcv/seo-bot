@@ -78,7 +78,7 @@ export function StepThree({ projectId, onComplete, onBack }: StepThreeProps) {
               type="text"
               value={competitorInput}
               onChange={(e) => setCompetitorInput(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
               placeholder="competitor.com"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {

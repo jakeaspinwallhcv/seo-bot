@@ -1,54 +1,59 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { createClient } from '@/lib/supabase/client'
-import { keywordsSchema, parseKeywordInput, type KeywordsFormData } from '@/lib/validations/onboarding'
+import { parseKeywordInput } from '@/lib/validations/onboarding'
 import { TIER_LIMITS } from '@/lib/utils/tier-limits'
 
 type StepTwoProps = {
   projectId: string
-  onComplete: (data: KeywordsFormData) => void
+  onComplete: (data: { keywords: string[] }) => void
   onBack: () => void
 }
 
 export function StepTwo({ projectId, onComplete, onBack }: StepTwoProps) {
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [keywordInput, setKeywordInput] = useState('')
   const [keywords, setKeywords] = useState<string[]>([])
 
-  const {
-    handleSubmit,
-    formState: { errors: formErrors },
-  } = useForm<KeywordsFormData>({
-    resolver: zodResolver(keywordsSchema),
-  })
-
   const handleAddKeywords = () => {
     if (!keywordInput.trim()) return
+
+    setWarning(null)
 
     // Security: Parse and sanitize keywords
     const newKeywords = parseKeywordInput(keywordInput)
 
-    // Combine with existing, enforce limit
-    const combined = [...keywords, ...newKeywords].slice(0, TIER_LIMITS.free.keywords)
+    // Combine with existing
+    const combined = [...keywords, ...newKeywords]
 
     // Remove duplicates (case-insensitive)
     const unique = Array.from(
       new Map(combined.map((k) => [k.toLowerCase(), k])).values()
     )
 
-    setKeywords(unique.slice(0, TIER_LIMITS.free.keywords))
+    // Check if limit exceeded
+    if (unique.length > TIER_LIMITS.free.keywords) {
+      setWarning(
+        `Free tier allows maximum ${TIER_LIMITS.free.keywords} keywords. Only the first ${TIER_LIMITS.free.keywords} will be added.`
+      )
+      setKeywords(unique.slice(0, TIER_LIMITS.free.keywords))
+    } else {
+      setKeywords(unique)
+    }
+
     setKeywordInput('')
   }
 
   const handleRemoveKeyword = (index: number) => {
     setKeywords((prev) => prev.filter((_, i) => i !== index))
+    setWarning(null)
   }
 
-  const onSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setError(null)
     setLoading(true)
 
@@ -108,10 +113,16 @@ export function StepTwo({ projectId, onComplete, onBack }: StepTwoProps) {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
           <div className="rounded-md bg-red-50 p-4">
             <div className="text-sm text-red-800">{error}</div>
+          </div>
+        )}
+
+        {warning && (
+          <div className="rounded-md bg-yellow-50 p-4">
+            <div className="text-sm text-yellow-800">{warning}</div>
           </div>
         )}
 
@@ -125,7 +136,7 @@ export function StepTwo({ projectId, onComplete, onBack }: StepTwoProps) {
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               rows={3}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
               placeholder="Enter keywords (one per line or comma-separated)&#10;e.g.&#10;real estate agent austin&#10;best homes in austin"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -142,7 +153,8 @@ export function StepTwo({ projectId, onComplete, onBack }: StepTwoProps) {
             <button
               type="button"
               onClick={handleAddKeywords}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={keywords.length >= TIER_LIMITS.free.keywords}
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Keywords
             </button>
@@ -156,6 +168,11 @@ export function StepTwo({ projectId, onComplete, onBack }: StepTwoProps) {
               <label className="block text-sm font-medium text-gray-700">
                 Added Keywords ({keywords.length}/{TIER_LIMITS.free.keywords})
               </label>
+              {keywords.length >= TIER_LIMITS.free.keywords && (
+                <span className="text-xs text-yellow-600 font-medium">
+                  Limit reached
+                </span>
+              )}
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-md p-3">
               {keywords.map((keyword, index) => (
@@ -175,10 +192,6 @@ export function StepTwo({ projectId, onComplete, onBack }: StepTwoProps) {
               ))}
             </div>
           </div>
-        )}
-
-        {formErrors.keywords && (
-          <p className="text-sm text-red-600">{formErrors.keywords.message}</p>
         )}
 
         <div className="flex justify-between">
