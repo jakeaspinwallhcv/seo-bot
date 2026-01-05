@@ -1,8 +1,8 @@
 # Setup Instructions
 
-## Current Status: Days 3-5 Complete ✅
+## Current Status: Days 6-7 Complete ✅
 
-Authentication and onboarding pages are built and ready to test!
+Authentication and interactive 5-step onboarding wizard are built and ready to test!
 
 ## Step 1: Run Database Migration
 
@@ -67,8 +67,24 @@ npm run dev
    - Should redirect to /onboarding
 
 4. **Onboarding**: http://localhost:3000/onboarding
-   - See the onboarding placeholder page
-   - Click "Skip to Dashboard"
+   - **Step 1**: Add your website/project
+     - Enter project name (e.g., "My Real Estate Business")
+     - Enter domain (e.g., "example.com")
+     - Click "Next"
+   - **Step 2**: Add keywords
+     - Enter 1-5 keywords (one per line or comma-separated)
+     - Click "Add Keywords" or press Cmd+Enter
+     - Review added keywords and click "Next"
+   - **Step 3**: Add competitors (optional)
+     - Enter up to 3 competitor domains
+     - Or click "Skip" to continue
+   - **Step 4**: Run first AI check
+     - Click "Run AI Check" to simulate checking AI platforms
+     - View mock results (real API integration coming in Days 18-21)
+     - Click "Next"
+   - **Step 5**: Setup complete
+     - Review what you've set up
+     - Click "Go to Dashboard"
 
 5. **Dashboard**: http://localhost:3000/dashboard
    - Should see your name/email in the header
@@ -105,12 +121,26 @@ After signing up, check your Supabase database:
 - User profiles auto-created on signup
 - Tables for: projects, keywords, rank_checks, ai_search_checks, generated_content, usage_tracking
 
-✅ **Pages**
-- Landing page
-- Login page
-- Signup page
-- Onboarding page (placeholder)
-- Dashboard page (with stat cards)
+✅ **Onboarding Wizard**
+- 5-step interactive wizard
+- Form validation with Zod
+- Input sanitization (prevents XSS)
+- Tier limit enforcement (free: 1 project, 5 keywords)
+- Domain validation and sanitization
+- Keyword parsing (comma/newline separated)
+- Simulated AI check (real integration coming Days 18-21)
+
+✅ **Security**
+- Input validation on all forms
+- XSS prevention (HTML tag blocking)
+- Tier limits enforced server-side
+- Row-Level Security (RLS) policies
+- See SECURITY.md for full details
+
+✅ **Testing**
+- Jest + React Testing Library configured
+- Tests for tier limits utility
+- Run tests with: `npm test`
 
 ## Next Steps (Days 6-30)
 

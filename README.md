@@ -34,19 +34,20 @@ Multi-tenant SaaS application that helps businesses track their rankings in both
 
 ## Phase 1 MVP: In Progress ⚙️
 
-**Current Status:** Authentication Complete (Days 3-5 ✅)
+**Current Status:** Onboarding Wizard Complete (Days 6-7 ✅)
 
 **What's Working:**
 - ✅ Next.js 14 with TypeScript and Tailwind CSS
 - ✅ Supabase authentication (signup, login, email verification)
 - ✅ Protected routes with middleware
 - ✅ Database schema with RLS policies
-- ✅ User profiles auto-created on signup
-- ✅ Dashboard and onboarding pages (placeholders)
+- ✅ **5-step onboarding wizard with validation**
+- ✅ **Tier limit enforcement (free tier: 1 project, 5 keywords)**
+- ✅ **Automated testing infrastructure (Jest + React Testing Library)**
+- ✅ **Security measures (input validation, XSS prevention, RLS)**
 
-**Next Steps (Days 6-30):**
-- 🔄 Onboarding Wizard (Days 6-7)
-- 📊 Dashboard UI with Charts (Days 8-10)
+**Next Steps (Days 8-30):**
+- 🔄 Dashboard UI with Charts (Days 8-10)
 - 🔑 Keyword Management (Days 11-13)
 - 📈 Traditional Rank Tracking (Days 14-17)
 - 🤖 AI Search Tracking (Days 18-21)
@@ -93,6 +94,15 @@ npm run lint
 
 # Type check
 npm run type-check
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ## Environment Variables
