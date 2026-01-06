@@ -178,6 +178,7 @@ export async function checkAISearch(
 ): Promise<AISearchResult[]> {
   const query = generateQuery(keyword)
   const results: AISearchResult[] = []
+  const errors: string[] = []
 
   for (const platform of platforms) {
     try {
@@ -206,9 +207,15 @@ export async function checkAISearch(
 
       results.push(result)
     } catch (error) {
-      console.error(`Error checking ${platform}:`, error)
-      // Continue with other platforms even if one fails
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      console.error(`Error checking ${platform}:`, errorMsg)
+      errors.push(`${platform}: ${errorMsg}`)
     }
+  }
+
+  // If all platforms failed, throw an error
+  if (results.length === 0 && errors.length > 0) {
+    throw new Error(`All AI platforms failed: ${errors.join(', ')}`)
   }
 
   return results

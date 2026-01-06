@@ -44,12 +44,14 @@ export function AISearchPageClient({ keywords }: AISearchPageClientProps) {
         method: 'POST',
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to check AI citations')
+        console.error('AI citation check failed:', result)
+        throw new Error(result.error || 'Failed to check AI citations')
       }
 
-      const result = await response.json()
+      console.log('AI citation check result:', result)
 
       // Store success message for after reload
       const message =
@@ -68,6 +70,7 @@ export function AISearchPageClient({ keywords }: AISearchPageClientProps) {
       // Refresh to show new data
       window.location.reload()
     } catch (error) {
+      console.error('Error checking all AI citations:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to check AI citations')
       setCheckingAll(false)
     }

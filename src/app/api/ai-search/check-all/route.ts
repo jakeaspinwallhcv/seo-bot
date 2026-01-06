@@ -91,6 +91,16 @@ export async function POST(request: Request) {
         // Check AI search citations
         const results = await checkAISearch(kw.keyword, domain, platforms)
 
+        // If no results returned, count as failure
+        if (results.length === 0) {
+          errors.push({
+            keywordId: kw.id,
+            keyword: kw.keyword,
+            error: 'No AI platforms returned results',
+          })
+          continue
+        }
+
         // Store results in database
         const checkRecords = results.map((result) => ({
           keyword_id: kw.id,
@@ -118,11 +128,12 @@ export async function POST(request: Request) {
           successful++
         }
       } catch (error) {
-        console.error(`Error checking AI citation for keyword ${kw.keyword}:`, error)
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+        console.error(`Error checking AI citation for keyword ${kw.keyword}:`, errorMsg)
         errors.push({
           keywordId: kw.id,
           keyword: kw.keyword,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: errorMsg,
         })
       }
     }
