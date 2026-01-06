@@ -19,18 +19,40 @@ export type AISearchResult = {
 
 /**
  * Generate a natural language query from a keyword
+ * Uses context-aware templates based on keyword type
  */
 function generateQuery(keyword: string): string {
-  const templates = [
-    `Who are the best ${keyword}?`,
-    `Can you recommend ${keyword}?`,
-    `What are the top ${keyword}?`,
-    `I'm looking for ${keyword}. What do you suggest?`,
-  ]
+  const lowerKeyword = keyword.toLowerCase()
 
-  // Use a simple hash to consistently pick the same template for a keyword
-  const hash = keyword.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return templates[hash % templates.length]
+  // Detect keyword type and use appropriate query
+  if (
+    lowerKeyword.includes('market') ||
+    lowerKeyword.includes('trends') ||
+    lowerKeyword.includes('forecast') ||
+    lowerKeyword.includes('analysis')
+  ) {
+    // Market/informational queries
+    return `What is the current state of the ${keyword}?`
+  } else if (
+    lowerKeyword.includes('agent') ||
+    lowerKeyword.includes('broker') ||
+    lowerKeyword.includes('lawyer') ||
+    lowerKeyword.includes('attorney') ||
+    lowerKeyword.includes('consultant') ||
+    lowerKeyword.includes('professional')
+  ) {
+    // Service provider queries
+    return `Who are the best ${keyword}?`
+  } else if (lowerKeyword.includes('how to') || lowerKeyword.includes('how do')) {
+    // How-to queries (already well-formed)
+    return keyword
+  } else if (lowerKeyword.startsWith('best ')) {
+    // Already starts with "best"
+    return `What are the ${keyword}?`
+  } else {
+    // General informational query
+    return `Tell me about ${keyword}`
+  }
 }
 
 /**
