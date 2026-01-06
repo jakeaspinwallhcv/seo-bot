@@ -2,22 +2,7 @@
 
 import { XIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
-
-type AICheck = {
-  id: string
-  platform: string
-  query: string
-  is_cited: boolean
-  response_text: string
-  citation_context?: string | null
-  checked_at: string
-}
-
-type KeywordWithAIChecks = {
-  id: string
-  keyword: string
-  ai_search_checks: AICheck[]
-}
+import type { KeywordWithAIChecks } from '@/lib/api/ai-search'
 
 type AISearchResultsModalProps = {
   isOpen: boolean

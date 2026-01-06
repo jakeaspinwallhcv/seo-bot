@@ -5,32 +5,7 @@ import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { RefreshCwIcon, CheckCircleIcon, XCircleIcon, EyeIcon } from 'lucide-react'
 import { AISearchResultsModal } from './ai-search-results-modal'
-
-type AICheck = {
-  id: string
-  platform: string
-  query: string
-  is_cited: boolean
-  response_text: string
-  citation_context?: string | null
-  checked_at: string
-}
-
-type KeywordWithAIChecks = {
-  id: string
-  keyword: string
-  project_id: string
-  created_at: string
-  projects: {
-    id: string
-    name: string
-    domain: string
-  }
-  ai_search_checks: AICheck[]
-  latestChecks: AICheck[]
-  citationRate: number
-  lastChecked: string | null
-}
+import type { KeywordWithAIChecks } from '@/lib/api/ai-search'
 
 type AISearchTableProps = {
   keywords: KeywordWithAIChecks[]

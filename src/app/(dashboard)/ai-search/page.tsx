@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getUserKeywordsWithAIChecks } from '@/lib/api/ai-search'
 import { AISearchPageClient } from '@/components/ai-search/ai-search-page-client'
 
 export default async function AISearchPage() {
@@ -21,79 +22,8 @@ export default async function AISearchPage() {
     .eq('id', user.id)
     .single()
 
-  // Get user's projects
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('id')
-    .eq('user_id', user.id)
-
-  const projectIds = projects?.map((p) => p.id) || []
-
-  // Fetch keywords with their AI search checks
-  const { data: keywords } = await supabase
-    .from('keywords')
-    .select(
-      `
-      id,
-      keyword,
-      project_id,
-      created_at,
-      projects (
-        id,
-        name,
-        domain
-      ),
-      ai_search_checks (
-        id,
-        platform,
-        query,
-        is_cited,
-        response_text,
-        citation_context,
-        checked_at
-      )
-    `
-    )
-    .in('project_id', projectIds)
-    .order('created_at', { ascending: false })
-
-  const processedKeywords = (keywords || []).map((kw: any) => {
-    const checks = kw.ai_search_checks || []
-
-    // Sort checks by date (most recent first)
-    const sortedChecks = [...checks].sort(
-      (a, b) =>
-        new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
-    )
-
-    // Get latest check results per platform
-    const latestByPlatform = new Map()
-    sortedChecks.forEach((check) => {
-      if (!latestByPlatform.has(check.platform)) {
-        latestByPlatform.set(check.platform, check)
-      }
-    })
-
-    // Calculate citation rate from latest checks
-    const latestChecks = Array.from(latestByPlatform.values())
-    const citedCount = latestChecks.filter((c) => c.is_cited).length
-    const citationRate =
-      latestChecks.length > 0
-        ? Math.round((citedCount / latestChecks.length) * 100)
-        : 0
-
-    return {
-      id: kw.id,
-      keyword: kw.keyword,
-      project_id: kw.project_id,
-      created_at: kw.created_at,
-      projects: kw.projects,
-      ai_search_checks: sortedChecks,
-      latestChecks: latestChecks,
-      citationRate,
-      lastChecked: sortedChecks[0]?.checked_at || null,
-    }
-  })
+  // Fetch keywords with AI search check history
+  const keywords = await getUserKeywordsWithAIChecks(user.id)
 
   const handleSignOut = async () => {
     'use server'
@@ -159,7 +89,7 @@ export default async function AISearchPage() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AISearchPageClient keywords={processedKeywords} />
+        <AISearchPageClient keywords={keywords} />
       </main>
     </div>
   )
