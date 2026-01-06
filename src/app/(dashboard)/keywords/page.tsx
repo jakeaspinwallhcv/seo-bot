@@ -2,7 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getUserKeywords } from '@/lib/api/keywords'
 import { KeywordTable } from '@/components/keywords/keyword-table'
+import { KeywordsPageClient } from '@/components/keywords/keywords-page-client'
 import { HashIcon } from 'lucide-react'
+import { TIER_LIMITS } from '@/lib/utils/tier-limits'
 
 export default async function KeywordsPage() {
   const supabase = await createClient()
@@ -22,8 +24,18 @@ export default async function KeywordsPage() {
     .eq('id', session.user.id)
     .single()
 
+  // Fetch user's project
+  const { data: project } = await supabase
+    .from('projects')
+    .select('id, name')
+    .eq('user_id', session.user.id)
+    .single()
+
   // Fetch keywords
   const keywords = await getUserKeywords(session.user.id)
+
+  const tier = (profile?.subscription_tier || 'free') as keyof typeof TIER_LIMITS
+  const keywordLimit = TIER_LIMITS[tier].keywords
 
   const handleSignOut = async () => {
     'use server'
@@ -89,46 +101,11 @@ export default async function KeywordsPage() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Keywords</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Manage and track your keyword rankings
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-500">
-                {keywords.length} / 5 keywords used
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {keywords.length === 0 ? (
-          <div className="bg-white shadow rounded-lg p-12">
-            <div className="text-center">
-              <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
-                <HashIcon className="h-12 w-12" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No keywords yet
-              </h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Get started by adding keywords during onboarding or create a new
-                project.
-              </p>
-              <a
-                href="/dashboard"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Go to Dashboard
-              </a>
-            </div>
-          </div>
-        ) : (
-          <KeywordTable keywords={keywords} />
-        )}
+        <KeywordsPageClient
+          keywords={keywords}
+          keywordLimit={keywordLimit}
+          project={project}
+        />
       </main>
     </div>
   )

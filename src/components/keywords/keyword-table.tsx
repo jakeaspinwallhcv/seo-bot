@@ -52,18 +52,10 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
         throw new Error(error.error || 'Failed to update keyword')
       }
 
-      // Update local state
-      setKeywords((prev) =>
-        prev.map((kw) =>
-          kw.id === keywordId ? { ...kw, keyword: editValue.trim().toLowerCase() } : kw
-        )
-      )
-
-      setEditingId(null)
-      setEditValue('')
+      // Refresh the page to get updated data from server
+      window.location.reload()
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to update keyword')
-    } finally {
       setLoading(null)
     }
   }
@@ -87,11 +79,10 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
         throw new Error(error.error || 'Failed to delete keyword')
       }
 
-      // Update local state
-      setKeywords((prev) => prev.filter((kw) => kw.id !== keywordId))
+      // Refresh the page to get updated data from server
+      window.location.reload()
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to delete keyword')
-    } finally {
       setLoading(null)
     }
   }
