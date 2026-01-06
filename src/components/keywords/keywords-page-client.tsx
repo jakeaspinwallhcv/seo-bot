@@ -60,7 +60,12 @@ export function KeywordsPageClient({
         {isAtLimit && (
           <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-md p-3">
             <p className="text-sm text-yellow-800">
-              You've reached your keyword limit. Upgrade to add more keywords.
+              You've reached your keyword limit.{' '}
+              {/* TODO: Link to billing page when implemented */}
+              <a href="#" className="font-medium underline hover:text-yellow-900">
+                Upgrade
+              </a>{' '}
+              to add more keywords.
             </p>
           </div>
         )}

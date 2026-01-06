@@ -89,7 +89,7 @@ export function AddKeywordModal({
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="e.g., real estate agent miami"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 placeholder-gray-400"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-base py-2.5 px-3 text-gray-900 placeholder-gray-400"
                 disabled={loading}
                 autoFocus
               />
