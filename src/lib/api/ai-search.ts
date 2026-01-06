@@ -47,7 +47,7 @@ export async function getUserKeywordsWithAIChecks(
     return []
   }
 
-  // Fetch keywords with project info and AI search checks
+  // Fetch keywords with project info (without ai_search_checks first to debug)
   const { data: keywords, error: keywordsError } = await supabase
     .from('keywords')
     .select(
@@ -60,15 +60,6 @@ export async function getUserKeywordsWithAIChecks(
         id,
         name,
         domain
-      ),
-      ai_search_checks (
-        id,
-        platform,
-        query,
-        is_cited,
-        response_text,
-        citation_context,
-        checked_at
       )
     `
     )
@@ -90,8 +81,24 @@ export async function getUserKeywordsWithAIChecks(
     return []
   }
 
+  // Now fetch AI search checks separately for each keyword
+  const keywordsWithChecks = await Promise.all(
+    keywords.map(async (kw: any) => {
+      const { data: checks } = await supabase
+        .from('ai_search_checks')
+        .select('*')
+        .eq('keyword_id', kw.id)
+        .order('checked_at', { ascending: false })
+
+      return {
+        ...kw,
+        ai_search_checks: checks || [],
+      }
+    })
+  )
+
   // Process keywords to add citation metrics
-  const processedKeywords: KeywordWithAIChecks[] = keywords.map((kw: any) => {
+  const processedKeywords: KeywordWithAIChecks[] = keywordsWithChecks.map((kw: any) => {
     const checks = kw.ai_search_checks || []
 
     // Sort checks by date (most recent first)
