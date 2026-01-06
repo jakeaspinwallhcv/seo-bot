@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { KeywordTable } from './keyword-table'
 import { AddKeywordModal } from './add-keyword-modal'
-import { HashIcon, PlusIcon } from 'lucide-react'
+import { HashIcon, PlusIcon, RefreshCwIcon } from 'lucide-react'
 import type { KeywordWithProject } from '@/lib/api/keywords'
 
 type KeywordsPageClientProps = {
@@ -18,9 +18,45 @@ export function KeywordsPageClient({
   project,
 }: KeywordsPageClientProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [checkingAll, setCheckingAll] = useState(false)
 
   const canAddKeyword = keywords.length < keywordLimit && project !== null
   const isAtLimit = keywords.length >= keywordLimit
+
+  const handleCheckAllRanks = async () => {
+    if (keywords.length === 0) return
+
+    setCheckingAll(true)
+
+    try {
+      const response = await fetch('/api/keywords/check-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to check ranks')
+      }
+
+      const result = await response.json()
+
+      // Show results
+      if (result.failed > 0) {
+        alert(
+          `Rank check complete!\n\nSuccessful: ${result.successful}\nFailed: ${result.failed}\n\nRefreshing...`
+        )
+      } else {
+        alert(`Successfully checked ${result.successful} keywords!\n\nRefreshing...`)
+      }
+
+      // Refresh the page to show new data
+      window.location.reload()
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to check ranks')
+      setCheckingAll(false)
+    }
+  }
 
   return (
     <>
@@ -36,12 +72,25 @@ export function KeywordsPageClient({
             <span className="text-sm text-gray-500">
               {keywords.length} / {keywordLimit} keywords used
             </span>
+            {keywords.length > 0 && (
+              <button
+                onClick={handleCheckAllRanks}
+                disabled={checkingAll}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Check ranks for all keywords"
+              >
+                <RefreshCwIcon
+                  className={`h-4 w-4 mr-2 ${checkingAll ? 'animate-spin' : ''}`}
+                />
+                {checkingAll ? 'Checking...' : 'Check All Ranks'}
+              </button>
+            )}
             {project && (
               <button
                 onClick={() => setIsModalOpen(true)}
-                disabled={isAtLimit}
+                disabled={isAtLimit || checkingAll}
                 className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${
-                  isAtLimit
+                  isAtLimit || checkingAll
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'text-white bg-blue-600 hover:bg-blue-700'
                 }`}

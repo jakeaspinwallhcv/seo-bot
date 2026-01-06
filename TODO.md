@@ -31,32 +31,46 @@
 
 ## Automatic Rank Checking (Scheduled Jobs)
 
-**Priority**: Phase 2 (after DataForSEO integration in Days 14-17)
+**Priority**: Phase 2 (Paid Tier Feature)
 
-**Requirements**:
-- Implement Vercel Cron Jobs for scheduled rank checks
+**Current Implementation (Phase 1)** ✅:
+- Manual rank checking (single keyword)
+- Bulk rank checking ("Check All Ranks" button)
+- DataForSEO API integration
+- SERP features extraction
+- Rank history tracking with modal view
+
+**Planned for Phase 2**:
+- Implement Vercel Cron Jobs for automated scheduled rank checks
 - Schedule based on tier:
-  - Free: Manual only (current implementation)
-  - Starter: Weekly (Monday 6am UTC)
-  - Pro: Daily (6am UTC)
-  - Agency: Daily (6am UTC)
+  - **Free**: Manual only (current implementation - no automation)
+  - **Starter**: Weekly automatic checks (Monday 6am UTC)
+  - **Pro**: Daily automatic checks (6am UTC)
+  - **Agency**: Daily automatic checks (6am UTC)
 - Email notifications for significant rank changes (±5 positions)
 
 **Implementation Notes**:
 - Use Vercel Cron Jobs (defined in `vercel.json`)
-- Create `/api/cron/rank-checks` endpoint
-- Batch process keywords in groups of 10-20 to respect API limits
-- Store results in `rank_checks` table
-- Calculate rank changes and send notifications
+- Create `/api/cron/rank-checks` endpoint (reuse `/api/keywords/check-all` logic)
+- Batch process keywords by user to respect API limits
+- Store results in `rank_checks` table (already implemented)
+- Calculate rank changes and send email notifications
+- Respect tier limits (only check for users with active paid subscriptions)
+- Consider rate limiting (e.g., 10 keywords per minute to avoid API throttling)
 
 ---
 
 ## Phase 1 MVP Completion
 
+**Completed Days**:
+- ✅ Days 1-7: Project Setup, Auth, Onboarding
+- ✅ Days 8-10: Dashboard UI with Charts
+- ✅ Days 11-13: Keyword Management
+- ✅ Days 14-17: Traditional Rank Tracking (DataForSEO integration)
+
 **Remaining Days**:
-- Days 14-17: Traditional Rank Tracking (DataForSEO integration)
 - Days 18-21: AI Search Tracking (ChatGPT, Claude, Perplexity, Gemini)
 - Days 22-25: Content Generation (AI-powered blog posts)
 - Days 26-30: Polish & Testing
 
-**Current Status**: Days 11-13 Complete ✅
+**Current Status**: Days 14-17 Complete ✅
