@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { AISearchTable } from './ai-search-table'
-import { BrainCircuitIcon } from 'lucide-react'
+import { BrainCircuitIcon, RefreshCwIcon } from 'lucide-react'
 import type { KeywordWithAIChecks } from '@/lib/api/ai-search'
 
 type AISearchPageClientProps = {
@@ -11,6 +11,8 @@ type AISearchPageClientProps = {
 }
 
 export function AISearchPageClient({ keywords }: AISearchPageClientProps) {
+  const [checkingAll, setCheckingAll] = useState(false)
+
   // Check for toast messages after page reload
   useEffect(() => {
     const toastData = sessionStorage.getItem('toast')
@@ -29,6 +31,48 @@ export function AISearchPageClient({ keywords }: AISearchPageClientProps) {
     }
   }, [])
 
+  const handleCheckAllAICitations = async () => {
+    if (keywords.length === 0) {
+      toast.error('No keywords to check')
+      return
+    }
+
+    setCheckingAll(true)
+
+    try {
+      const response = await fetch('/api/ai-search/check-all', {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to check AI citations')
+      }
+
+      const result = await response.json()
+
+      // Store success message for after reload
+      const message =
+        result.failed > 0
+          ? `Checked ${result.successful}/${result.total} keywords. ${result.failed} failed.`
+          : `Successfully checked all ${result.successful} keywords!`
+
+      sessionStorage.setItem(
+        'toast',
+        JSON.stringify({
+          type: result.failed > 0 ? 'error' : 'success',
+          message,
+        })
+      )
+
+      // Refresh to show new data
+      window.location.reload()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to check AI citations')
+      setCheckingAll(false)
+    }
+  }
+
   return (
     <>
       <div className="mb-8">
@@ -39,6 +83,18 @@ export function AISearchPageClient({ keywords }: AISearchPageClientProps) {
               Check if your website is mentioned in AI chatbot responses
             </p>
           </div>
+          {keywords.length > 0 && (
+            <button
+              onClick={handleCheckAllAICitations}
+              disabled={checkingAll}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCwIcon
+                className={`h-4 w-4 mr-2 ${checkingAll ? 'animate-spin' : ''}`}
+              />
+              {checkingAll ? 'Checking All...' : 'Check All AI Citations'}
+            </button>
+          )}
         </div>
       </div>
 
