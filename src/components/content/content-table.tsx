@@ -82,14 +82,14 @@ export function ContentTable({ content }: ContentTableProps) {
                       <div className="text-sm font-medium text-gray-900">
                         {item.title}
                       </div>
-                      {item.word_count && (
+                      {item.word_count ? (
                         <div className="text-xs text-gray-500">
                           {item.word_count} words
-                          {item.estimated_reading_time && (
+                          {item.estimated_reading_time ? (
                             <> · {item.estimated_reading_time} min read</>
-                          )}
+                          ) : null}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </td>

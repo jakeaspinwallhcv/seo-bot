@@ -44,7 +44,7 @@ export async function getUserContent(
     return []
   }
 
-  // Fetch generated content
+  // Fetch generated content (only select columns that exist in base schema)
   const { data: content, error } = await supabase
     .from('generated_content')
     .select(
@@ -55,9 +55,6 @@ export async function getUserContent(
       content_type,
       title,
       content,
-      meta_description,
-      suggested_keywords,
-      estimated_reading_time,
       word_count,
       status,
       created_at,
@@ -83,6 +80,9 @@ export async function getUserContent(
   // Transform the response to match our type
   const transformed = (content || []).map((item: any) => ({
     ...item,
+    meta_description: item.meta_description || null,
+    suggested_keywords: item.suggested_keywords || null,
+    estimated_reading_time: item.estimated_reading_time || null,
     keywords: Array.isArray(item.keywords) ? item.keywords[0] : item.keywords,
     projects: Array.isArray(item.projects) ? item.projects[0] : item.projects,
   }))
