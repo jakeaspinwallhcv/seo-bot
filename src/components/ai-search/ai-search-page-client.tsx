@@ -87,12 +87,13 @@ export function AISearchPageClient({ keywords }: AISearchPageClientProps) {
             <button
               onClick={handleCheckAllAICitations}
               disabled={checkingAll}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Check AI citations for all keywords"
             >
               <RefreshCwIcon
                 className={`h-4 w-4 mr-2 ${checkingAll ? 'animate-spin' : ''}`}
               />
-              {checkingAll ? 'Checking All...' : 'Check All AI Citations'}
+              {checkingAll ? 'Checking...' : 'Check All AI Citations'}
             </button>
           )}
         </div>
