@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getUserKeywordsWithAIChecks } from '@/lib/api/ai-search'
-import { AISearchPageClient } from '@/components/ai-search/ai-search-page-client'
+import { getUserContent } from '@/lib/api/content'
+import { ContentPageClient } from '@/components/content/content-page-client'
 
-export default async function AISearchPage() {
+export default async function ContentPage() {
   const supabase = await createClient()
 
   const {
@@ -22,8 +22,8 @@ export default async function AISearchPage() {
     .eq('id', user.id)
     .single()
 
-  // Fetch keywords with AI search check history
-  const keywords = await getUserKeywordsWithAIChecks(user.id)
+  // Fetch generated content
+  const content = await getUserContent(user.id)
 
   const handleSignOut = async () => {
     'use server'
@@ -55,13 +55,13 @@ export default async function AISearchPage() {
                 </a>
                 <a
                   href="/ai-search"
-                  className="inline-flex items-center px-3 py-2 border-b-2 border-blue-500 text-sm font-medium text-gray-900"
+                  className="inline-flex items-center px-3 py-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700"
                 >
                   AI Search
                 </a>
                 <a
                   href="/content"
-                  className="inline-flex items-center px-3 py-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700"
+                  className="inline-flex items-center px-3 py-2 border-b-2 border-blue-500 text-sm font-medium text-gray-900"
                 >
                   Content
                 </a>
@@ -89,7 +89,7 @@ export default async function AISearchPage() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AISearchPageClient keywords={keywords} />
+        <ContentPageClient content={content} />
       </main>
     </div>
   )
