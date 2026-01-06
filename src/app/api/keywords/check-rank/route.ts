@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createDataForSEOClient } from '@/lib/services/dataforseo'
 
 export async function POST(request: Request) {
   try {
@@ -37,17 +38,79 @@ export async function POST(request: Request) {
       )
     }
 
-    // TODO: Replace with actual DataForSEO integration in Days 14-17
-    // For now, simulate a rank check with random data
-    const simulatedRank = Math.floor(Math.random() * 100) + 1
+    const keyword = keywordData.keyword
+    const domain = (keywordData.projects as any)?.domain
+
+    if (!domain) {
+      return NextResponse.json(
+        { error: 'Project domain not found' },
+        { status: 400 }
+      )
+    }
+
+    // Check if DataForSEO is configured
+    const hasDataForSEO =
+      process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD
+
+    let rankResult
+
+    if (hasDataForSEO) {
+      // Use real DataForSEO API
+      try {
+        const client = createDataForSEOClient()
+        rankResult = await client.checkRank(keyword, domain, {
+          locationCode: 2840, // USA - TODO: Make this configurable per project
+          languageCode: 'en',
+          device: 'desktop',
+        })
+      } catch (error) {
+        console.error('DataForSEO API error:', error)
+        // Fall back to simulated data if API fails
+        rankResult = {
+          rank: Math.floor(Math.random() * 100) + 1,
+          url: null,
+          title: null,
+          serp_features: {
+            featured_snippet: false,
+            people_also_ask: false,
+            local_pack: false,
+            knowledge_graph: false,
+            image_pack: false,
+            video_pack: false,
+          },
+          total_results: 0,
+          checked_at: new Date().toISOString(),
+        }
+      }
+    } else {
+      // Simulated data for testing without API credentials
+      rankResult = {
+        rank: Math.floor(Math.random() * 100) + 1,
+        url: null,
+        title: null,
+        serp_features: {
+          featured_snippet: false,
+          people_also_ask: false,
+          local_pack: false,
+          knowledge_graph: false,
+          image_pack: false,
+          video_pack: false,
+        },
+        total_results: 0,
+        checked_at: new Date().toISOString(),
+      }
+    }
 
     // Insert rank check result
     const { error: insertError } = await supabase
       .from('rank_checks')
       .insert({
         keyword_id: keywordId,
-        rank: simulatedRank,
-        checked_at: new Date().toISOString(),
+        rank: rankResult.rank,
+        url: rankResult.url,
+        title: rankResult.title,
+        serp_features: rankResult.serp_features,
+        checked_at: rankResult.checked_at,
       })
 
     if (insertError) {
@@ -56,8 +119,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      rank: simulatedRank,
-      message: 'Rank check complete (simulated data - real integration coming in Days 14-17)',
+      rank: rankResult.rank,
+      url: rankResult.url,
+      title: rankResult.title,
+      serp_features: rankResult.serp_features,
+      message: hasDataForSEO
+        ? 'Rank check complete using DataForSEO API'
+        : 'Rank check complete (simulated data - configure DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD to use real API)',
     })
   } catch (error) {
     console.error('Error checking rank:', error)

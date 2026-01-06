@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import type { KeywordWithProject } from '@/lib/api/keywords'
+import { RankHistoryModal } from './rank-history-modal'
 import {
   PencilIcon,
   TrashIcon,
@@ -10,6 +11,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   MinusIcon,
+  HistoryIcon,
 } from 'lucide-react'
 
 type KeywordTableProps = {
@@ -21,6 +23,7 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
+  const [historyKeyword, setHistoryKeyword] = useState<KeywordWithProject | null>(null)
 
   const handleEdit = (keyword: KeywordWithProject) => {
     setEditingId(keyword.id)
@@ -274,6 +277,14 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
                         />
                       </button>
                       <button
+                        onClick={() => setHistoryKeyword(keyword)}
+                        disabled={loading === keyword.id}
+                        className="text-purple-600 hover:text-purple-900 disabled:opacity-50"
+                        title="View history"
+                      >
+                        <HistoryIcon className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => handleEdit(keyword)}
                         disabled={loading === keyword.id}
                         className="text-gray-600 hover:text-gray-900 disabled:opacity-50"
@@ -297,6 +308,16 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Rank History Modal */}
+      {historyKeyword && (
+        <RankHistoryModal
+          isOpen={historyKeyword !== null}
+          onClose={() => setHistoryKeyword(null)}
+          keyword={historyKeyword.keyword}
+          rankChecks={historyKeyword.rank_checks}
+        />
+      )}
     </div>
   )
 }
