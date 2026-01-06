@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { KeywordTable } from './keyword-table'
 import { AddKeywordModal } from './add-keyword-modal'
 import { HashIcon, PlusIcon, RefreshCwIcon } from 'lucide-react'
@@ -23,6 +24,24 @@ export function KeywordsPageClient({
   const canAddKeyword = keywords.length < keywordLimit && project !== null
   const isAtLimit = keywords.length >= keywordLimit
 
+  // Check for toast messages after page reload
+  useEffect(() => {
+    const toastData = sessionStorage.getItem('toast')
+    if (toastData) {
+      try {
+        const { type, message } = JSON.parse(toastData)
+        if (type === 'success') {
+          toast.success(message)
+        } else if (type === 'error') {
+          toast.error(message)
+        }
+        sessionStorage.removeItem('toast')
+      } catch (error) {
+        console.error('Failed to parse toast data:', error)
+      }
+    }
+  }, [])
+
   const handleCheckAllRanks = async () => {
     if (keywords.length === 0) return
 
@@ -41,19 +60,23 @@ export function KeywordsPageClient({
 
       const result = await response.json()
 
-      // Show results
+      // Store success message for after reload
       if (result.failed > 0) {
-        alert(
-          `Rank check complete!\n\nSuccessful: ${result.successful}\nFailed: ${result.failed}\n\nRefreshing...`
-        )
+        sessionStorage.setItem('toast', JSON.stringify({
+          type: 'success',
+          message: `Rank check complete! Successful: ${result.successful}, Failed: ${result.failed}`
+        }))
       } else {
-        alert(`Successfully checked ${result.successful} keywords!\n\nRefreshing...`)
+        sessionStorage.setItem('toast', JSON.stringify({
+          type: 'success',
+          message: `Successfully checked ${result.successful} keyword${result.successful > 1 ? 's' : ''}!`
+        }))
       }
 
       // Refresh the page to show new data
       window.location.reload()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to check ranks')
+      toast.error(error instanceof Error ? error.message : 'Failed to check ranks')
       setCheckingAll(false)
     }
   }

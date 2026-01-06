@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
+import { toast } from 'sonner'
 import type { KeywordWithProject } from '@/lib/api/keywords'
 import { RankHistoryModal } from './rank-history-modal'
 import {
@@ -37,7 +38,7 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
 
   const handleSaveEdit = async (keywordId: string) => {
     if (!editValue.trim()) {
-      alert('Keyword cannot be empty')
+      toast.error('Keyword cannot be empty')
       return
     }
 
@@ -55,10 +56,16 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
         throw new Error(error.error || 'Failed to update keyword')
       }
 
+      // Store success message for after reload
+      sessionStorage.setItem('toast', JSON.stringify({
+        type: 'success',
+        message: 'Keyword updated successfully'
+      }))
+
       // Refresh the page to get updated data from server
       window.location.reload()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to update keyword')
+      toast.error(error instanceof Error ? error.message : 'Failed to update keyword')
       setLoading(null)
     }
   }
@@ -82,10 +89,16 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
         throw new Error(error.error || 'Failed to delete keyword')
       }
 
+      // Store success message for after reload
+      sessionStorage.setItem('toast', JSON.stringify({
+        type: 'success',
+        message: `Deleted "${keyword}" successfully`
+      }))
+
       // Refresh the page to get updated data from server
       window.location.reload()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to delete keyword')
+      toast.error(error instanceof Error ? error.message : 'Failed to delete keyword')
       setLoading(null)
     }
   }
@@ -132,9 +145,11 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
         })
       )
 
-      alert(`Rank check complete! Current rank: ${rank !== null ? `#${rank}` : 'Not ranked'}`)
+      toast.success(
+        `Rank check complete! Current rank: ${rank !== null ? `#${rank}` : 'Not ranked'}`
+      )
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to check rank')
+      toast.error(error instanceof Error ? error.message : 'Failed to check rank')
     } finally {
       setLoading(null)
     }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { XIcon } from 'lucide-react'
 
 type AddKeywordModalProps = {
@@ -25,7 +26,7 @@ export function AddKeywordModal({
     e.preventDefault()
 
     if (!keyword.trim()) {
-      alert('Please enter a keyword')
+      toast.error('Please enter a keyword')
       return
     }
 
@@ -43,10 +44,16 @@ export function AddKeywordModal({
         throw new Error(error.error || 'Failed to add keyword')
       }
 
+      // Store success message for after reload
+      sessionStorage.setItem('toast', JSON.stringify({
+        type: 'success',
+        message: `Added "${keyword.trim()}" successfully`
+      }))
+
       // Refresh the page to show new keyword
       window.location.reload()
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to add keyword')
+      toast.error(error instanceof Error ? error.message : 'Failed to add keyword')
       setLoading(false)
     }
   }
