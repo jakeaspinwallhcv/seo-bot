@@ -1,19 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getUserKeywords } from '@/lib/api/keywords'
-import { KeywordTable } from '@/components/keywords/keyword-table'
-import { KeywordsPageClient } from '@/components/keywords/keywords-page-client'
-import { HashIcon } from 'lucide-react'
-import { TIER_LIMITS } from '@/lib/utils/tier-limits'
+import { AISearchPageClient } from '@/components/ai-search/ai-search-page-client'
 
-export default async function KeywordsPage() {
+export default async function AISearchPage() {
   const supabase = await createClient()
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (authError || !user) {
     redirect('/login')
   }
 
@@ -21,21 +18,82 @@ export default async function KeywordsPage() {
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single()
 
-  // Fetch user's project
-  const { data: project } = await supabase
+  // Get user's projects
+  const { data: projects } = await supabase
     .from('projects')
-    .select('id, name')
-    .eq('user_id', session.user.id)
-    .single()
+    .select('id')
+    .eq('user_id', user.id)
 
-  // Fetch keywords
-  const keywords = await getUserKeywords(session.user.id)
+  const projectIds = projects?.map((p) => p.id) || []
 
-  const tier = (profile?.subscription_tier || 'free') as keyof typeof TIER_LIMITS
-  const keywordLimit = TIER_LIMITS[tier].keywords
+  // Fetch keywords with their AI search checks
+  const { data: keywords } = await supabase
+    .from('keywords')
+    .select(
+      `
+      id,
+      keyword,
+      project_id,
+      created_at,
+      projects (
+        id,
+        name,
+        domain
+      ),
+      ai_search_checks (
+        id,
+        platform,
+        query,
+        is_cited,
+        response_text,
+        citation_context,
+        checked_at
+      )
+    `
+    )
+    .in('project_id', projectIds)
+    .order('created_at', { ascending: false })
+
+  const processedKeywords = (keywords || []).map((kw: any) => {
+    const checks = kw.ai_search_checks || []
+
+    // Sort checks by date (most recent first)
+    const sortedChecks = [...checks].sort(
+      (a, b) =>
+        new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
+    )
+
+    // Get latest check results per platform
+    const latestByPlatform = new Map()
+    sortedChecks.forEach((check) => {
+      if (!latestByPlatform.has(check.platform)) {
+        latestByPlatform.set(check.platform, check)
+      }
+    })
+
+    // Calculate citation rate from latest checks
+    const latestChecks = Array.from(latestByPlatform.values())
+    const citedCount = latestChecks.filter((c) => c.is_cited).length
+    const citationRate =
+      latestChecks.length > 0
+        ? Math.round((citedCount / latestChecks.length) * 100)
+        : 0
+
+    return {
+      id: kw.id,
+      keyword: kw.keyword,
+      project_id: kw.project_id,
+      created_at: kw.created_at,
+      projects: kw.projects,
+      ai_search_checks: sortedChecks,
+      latestChecks: latestChecks,
+      citationRate,
+      lastChecked: sortedChecks[0]?.checked_at || null,
+    }
+  })
 
   const handleSignOut = async () => {
     'use server'
@@ -61,13 +119,13 @@ export default async function KeywordsPage() {
                 </a>
                 <a
                   href="/keywords"
-                  className="inline-flex items-center px-3 py-2 border-b-2 border-blue-500 text-sm font-medium text-gray-900"
+                  className="inline-flex items-center px-3 py-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700"
                 >
                   Keywords
                 </a>
                 <a
                   href="/ai-search"
-                  className="inline-flex items-center px-3 py-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700"
+                  className="inline-flex items-center px-3 py-2 border-b-2 border-blue-500 text-sm font-medium text-gray-900"
                 >
                   AI Search
                 </a>
@@ -81,7 +139,7 @@ export default async function KeywordsPage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">
-                {profile?.full_name || session.user.email}
+                {profile?.full_name || user.email}
               </span>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
                 {profile?.subscription_tier || 'free'}
@@ -101,11 +159,7 @@ export default async function KeywordsPage() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <KeywordsPageClient
-          keywords={keywords}
-          keywordLimit={keywordLimit}
-          project={project}
-        />
+        <AISearchPageClient keywords={processedKeywords} />
       </main>
     </div>
   )
