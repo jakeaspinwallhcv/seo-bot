@@ -76,7 +76,13 @@ export async function getUserKeywordsWithAIChecks(
     .order('created_at', { ascending: false })
 
   if (keywordsError) {
-    console.error('Error fetching keywords for AI search:', keywordsError)
+    console.error('Error fetching keywords for AI search:', {
+      error: keywordsError,
+      message: keywordsError.message,
+      details: keywordsError.details,
+      hint: keywordsError.hint,
+      code: keywordsError.code,
+    })
     return []
   }
 
