@@ -25,7 +25,16 @@ Multi-tenant SaaS application that helps businesses track their rankings in both
    # Edit .env.local with your actual API keys
    ```
 
-3. **Start development server**
+3. **Run database migrations**
+
+   You need to run the database migrations on Supabase. See [MIGRATIONS.md](./MIGRATIONS.md) for detailed instructions.
+
+   **Quick start**:
+   - Go to your Supabase project → SQL Editor
+   - Run the migration: `supabase/migrations/20260105010000_add_serp_features.sql`
+   - This adds columns needed for rank tracking (url, title, serp_features)
+
+4. **Start development server**
    ```bash
    npm run dev
    ```

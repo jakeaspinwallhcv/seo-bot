@@ -6,12 +6,13 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
 
-    // Check authentication
+    // Check authentication - use getUser() for security
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       .eq('id', keywordId)
       .single()
 
-    if (!keywordData || (keywordData.projects as any)?.user_id !== session.user.id) {
+    if (!keywordData || (keywordData.projects as any)?.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Keyword not found or unauthorized' },
         { status: 404 }

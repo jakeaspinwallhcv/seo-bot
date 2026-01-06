@@ -6,12 +6,13 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
 
-    // Check authentication
+    // Check authentication - use getUser() for security
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
       .eq('id', projectId)
       .single()
 
-    if (!projectData || projectData.user_id !== session.user.id) {
+    if (!projectData || projectData.user_id !== user.id) {
       return NextResponse.json(
         { error: 'Project not found or unauthorized' },
         { status: 404 }
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('subscription_tier')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
 
     const tier = (profile?.subscription_tier || 'free') as keyof typeof TIER_LIMITS
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
     const { data: projects } = await supabase
       .from('projects')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     const projectIds = projects?.map((p) => p.id) || []
 
