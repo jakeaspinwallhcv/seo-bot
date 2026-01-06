@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/jakeaspinwallhcv/seo-bot#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
@@ -33,6 +34,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.562.0",
     "next": "^16.1.1",
+    "openai": "^6.15.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.70.0",
