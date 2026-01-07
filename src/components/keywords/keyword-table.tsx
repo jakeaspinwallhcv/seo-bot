@@ -13,6 +13,7 @@ import {
   ArrowDownIcon,
   MinusIcon,
   HistoryIcon,
+  FileTextIcon,
 } from 'lucide-react'
 
 type KeywordTableProps = {
@@ -151,6 +152,38 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to check rank')
     } finally {
+      setLoading(null)
+    }
+  }
+
+  const handleGenerateContent = async (keywordId: string, keyword: string) => {
+    setLoading(keywordId)
+
+    try {
+      const response = await fetch('/api/content/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywordId }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate content')
+      }
+
+      // Store success message for after navigation
+      sessionStorage.setItem(
+        'toast',
+        JSON.stringify({
+          type: 'success',
+          message: `Content generated for "${keyword}"! View it on the Content page.`,
+        })
+      )
+
+      // Navigate to content page
+      window.location.href = '/content'
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate content')
       setLoading(null)
     }
   }
@@ -298,6 +331,16 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
                         title="View history"
                       >
                         <HistoryIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleGenerateContent(keyword.id, keyword.keyword)}
+                        disabled={loading === keyword.id}
+                        className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                        title="Generate content"
+                      >
+                        <FileTextIcon
+                          className={`h-4 w-4 ${loading === keyword.id ? 'animate-pulse' : ''}`}
+                        />
                       </button>
                       <button
                         onClick={() => handleEdit(keyword)}
