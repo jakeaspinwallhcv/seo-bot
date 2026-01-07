@@ -204,13 +204,13 @@ export function GenerateContentModal({
 
             {/* Hero Image Option */}
             <div className="mb-6">
-              <label className="flex items-center">
+              <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeHeroImage}
                   onChange={(e) => setIncludeHeroImage(e.target.checked)}
                   disabled={isLoading}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="h-4 w-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 />
                 <span className="ml-3 text-sm text-gray-700">
                   <span className="font-medium">Generate AI hero image</span>
