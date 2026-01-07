@@ -2,10 +2,12 @@
  * AI-Powered Content Generation Service
  * Generates SEO-optimized blog posts and content using Claude
  * Generates hero images using DALL-E 3
+ * Uploads images to Supabase Storage for permanent URLs
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ContentType = 'blog_post' | 'landing_page' | 'product_description'
 
@@ -26,7 +28,9 @@ export async function generateContent(
   domain: string,
   contentType: ContentType = 'blog_post',
   targetWordCount: number = 1500,
-  includeHeroImage: boolean = true
+  includeHeroImage: boolean = true,
+  supabase?: SupabaseClient,
+  userId?: string
 ): Promise<GeneratedContent> {
   const apiKey = process.env.ANTHROPIC_API_KEY
 
@@ -69,7 +73,7 @@ export async function generateContent(
     // Generate hero image with DALL-E 3 (only if requested)
     if (includeHeroImage && process.env.OPENAI_API_KEY) {
       try {
-        const heroImageUrl = await generateHeroImage(keyword, domain)
+        const heroImageUrl = await generateHeroImage(keyword, domain, supabase, userId)
         parsed.hero_image_url = heroImageUrl
       } catch (error) {
         console.error('Hero image generation failed:', error)
@@ -316,10 +320,13 @@ Return ONLY the prompt text, nothing else. Make it 2-3 sentences maximum.`,
 
 /**
  * Generate hero image using DALL-E 3 with Claude-enhanced prompts
+ * Downloads the image and uploads to Supabase Storage for permanent URL
  */
 async function generateHeroImage(
   keyword: string,
-  domain: string
+  domain: string,
+  supabase?: SupabaseClient,
+  userId?: string
 ): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY
 
@@ -348,15 +355,90 @@ Style: Professional photography, hyper-realistic, 8K quality, magazine cover wor
       n: 1,
     })
 
-    const imageUrl = response.data[0]?.url
+    const temporaryImageUrl = response.data[0]?.url
 
-    if (!imageUrl) {
+    if (!temporaryImageUrl) {
       throw new Error('No image URL returned from DALL-E 3')
     }
 
-    return imageUrl
+    // If Supabase client provided, download and upload for permanent storage
+    if (supabase && userId) {
+      try {
+        const permanentUrl = await downloadAndUploadImage(
+          temporaryImageUrl,
+          keyword,
+          supabase,
+          userId
+        )
+        console.log('Image uploaded to Supabase Storage:', permanentUrl)
+        return permanentUrl
+      } catch (uploadError) {
+        console.error('Failed to upload to Supabase Storage:', uploadError)
+        // Fall back to temporary DALL-E URL if upload fails
+        console.warn('Falling back to temporary DALL-E URL (will expire in hours)')
+        return temporaryImageUrl
+      }
+    }
+
+    // No Supabase client provided, return temporary URL
+    console.warn('No Supabase client provided - using temporary DALL-E URL (will expire)')
+    return temporaryImageUrl
   } catch (error) {
     console.error('DALL-E 3 image generation error:', error)
     throw error
   }
+}
+
+/**
+ * Download image from URL and upload to Supabase Storage
+ * Returns permanent public URL
+ */
+async function downloadAndUploadImage(
+  imageUrl: string,
+  keyword: string,
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string> {
+  // Download image from DALL-E URL
+  const response = await fetch(imageUrl)
+
+  if (!response.ok) {
+    throw new Error(`Failed to download image: ${response.statusText}`)
+  }
+
+  const imageBuffer = await response.arrayBuffer()
+  const imageBlob = new Blob([imageBuffer], { type: 'image/png' })
+
+  // Create unique filename based on keyword and timestamp
+  const sanitizedKeyword = keyword
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .substring(0, 50)
+  const timestamp = Date.now()
+  const fileName = `${userId}/${sanitizedKeyword}-${timestamp}.png`
+
+  // Upload to Supabase Storage
+  const { data, error } = await supabase.storage
+    .from('hero-images')
+    .upload(fileName, imageBlob, {
+      contentType: 'image/png',
+      cacheControl: '31536000', // Cache for 1 year
+      upsert: false,
+    })
+
+  if (error) {
+    throw new Error(`Failed to upload to Supabase Storage: ${error.message}`)
+  }
+
+  // Get public URL
+  const { data: publicUrlData } = supabase.storage
+    .from('hero-images')
+    .getPublicUrl(data.path)
+
+  if (!publicUrlData?.publicUrl) {
+    throw new Error('Failed to get public URL from Supabase Storage')
+  }
+
+  return publicUrlData.publicUrl
 }

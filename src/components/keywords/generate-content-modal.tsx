@@ -54,7 +54,7 @@ export function GenerateContentModal({
 }: GenerateContentModalProps) {
   const [selectedType, setSelectedType] = useState<string>('blog_post')
   const [wordCount, setWordCount] = useState<number>(1500)
-  const [includeHeroImage, setIncludeHeroImage] = useState<boolean>(true)
+  const [includeHeroImage, setIncludeHeroImage] = useState<boolean>(false)
 
   if (!isOpen) return null
 
@@ -68,10 +68,7 @@ export function GenerateContentModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/50 transition-opacity"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/50 transition-opacity" />
 
         {/* Modal */}
         <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">

@@ -57,11 +57,11 @@ This document tracks features and improvements that have been identified but not
   - Draft→Published workflow automation
 
 ### Image Management
-- [ ] **Permanent Image Storage** - CRITICAL: DALL-E URLs expire after a few hours
-  - Download DALL-E images and store in Supabase Storage
-  - Automatic download and re-upload after generation
-  - Fallback to placeholder if image fails to load
-  - Background job to migrate existing DALL-E URLs
+- [x] **Permanent Image Storage** - CRITICAL: DALL-E URLs expire after a few hours
+  - ✅ Download DALL-E images and store in Supabase Storage
+  - ✅ Automatic download and re-upload after generation
+  - ✅ Fallback to placeholder if image fails to load
+  - [ ] Background job to migrate existing DALL-E URLs
 
 - [ ] **Image Library** - Store and manage images
   - Upload custom images
@@ -171,7 +171,7 @@ This document tracks features and improvements that have been identified but not
 ## Priority Rankings
 
 ### Critical (ASAP - Breaks Existing Functionality)
-1. **Permanent Image Storage** - DALL-E URLs expire after hours, breaking content
+1. ~~**Permanent Image Storage** - DALL-E URLs expire after hours, breaking content~~ ✅ COMPLETED
 
 ### High Priority (Next Sprint)
 1. SEO Score Algorithm

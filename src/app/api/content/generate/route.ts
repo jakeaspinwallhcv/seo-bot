@@ -70,7 +70,9 @@ export async function POST(request: Request) {
       domain,
       (contentType as ContentType) || 'blog_post',
       targetWordCount || 1500,
-      includeHeroImage !== false // Default to true if not specified
+      includeHeroImage !== false, // Default to true if not specified
+      supabase, // Pass Supabase client for image storage
+      user.id // Pass user ID for organizing images
     )
 
     // Calculate word count

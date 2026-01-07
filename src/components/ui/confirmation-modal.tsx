@@ -58,10 +58,7 @@ export function ConfirmationModal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/50 transition-opacity"
-          onClick={!isLoading ? onClose : undefined}
-        />
+        <div className="fixed inset-0 bg-black/50 transition-opacity" />
 
         {/* Modal */}
         <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
