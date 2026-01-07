@@ -26,6 +26,7 @@ export function ContentViewerModal({
   const [editedTitle, setEditedTitle] = useState(content.title)
   const [editedContent, setEditedContent] = useState(content.content)
   const [editedMetaDescription, setEditedMetaDescription] = useState(content.meta_description || '')
+  const [imageError, setImageError] = useState(false)
 
   if (!isOpen) return null
 
@@ -132,7 +133,7 @@ export function ContentViewerModal({
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          className="fixed inset-0 bg-black/50 transition-opacity"
           onClick={onClose}
         />
 
@@ -214,13 +215,22 @@ export function ContentViewerModal({
           {/* Content */}
           <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
             {/* Hero Image */}
-            {content.hero_image_url && (
+            {content.hero_image_url && !imageError && (
               <div className="mb-6">
                 <img
                   src={content.hero_image_url}
                   alt={content.title}
                   className="w-full h-auto rounded-lg"
+                  onError={() => setImageError(true)}
                 />
+              </div>
+            )}
+            {content.hero_image_url && imageError && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ Hero image failed to load. DALL-E URLs expire after a few hours.
+                  Consider uploading your own image or regenerating the content.
+                </p>
               </div>
             )}
 

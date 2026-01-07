@@ -125,11 +125,16 @@ export function ContentTable({ content: initialContent }: ContentTableProps) {
                       <img
                         src={item.hero_image_url}
                         alt={item.title}
-                        className="h-12 w-20 object-cover rounded mr-3"
+                        className="h-12 w-20 object-cover rounded mr-3 flex-shrink-0"
+                        onError={(e) => {
+                          // Hide image and show icon if image fails to load
+                          e.currentTarget.style.display = 'none'
+                          const icon = e.currentTarget.nextElementSibling
+                          if (icon) icon.classList.remove('hidden')
+                        }}
                       />
-                    ) : (
-                      <FileTextIcon className="h-5 w-5 text-gray-400 mr-3" />
-                    )}
+                    ) : null}
+                    <FileTextIcon className={`h-5 w-5 text-gray-400 mr-3 flex-shrink-0 ${item.hero_image_url ? 'hidden' : ''}`} />
                     <div>
                       <div className="text-sm font-medium text-gray-900">
                         {item.title}
