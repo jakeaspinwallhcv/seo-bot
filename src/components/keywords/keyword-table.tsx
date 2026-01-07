@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 import type { KeywordWithProject } from '@/lib/api/keywords'
 import { RankHistoryModal } from './rank-history-modal'
+import { GenerateContentModal } from './generate-content-modal'
 import {
   PencilIcon,
   TrashIcon,
@@ -26,6 +27,7 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
   const [editValue, setEditValue] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [historyKeyword, setHistoryKeyword] = useState<KeywordWithProject | null>(null)
+  const [generatingKeyword, setGeneratingKeyword] = useState<KeywordWithProject | null>(null)
 
   const handleEdit = (keyword: KeywordWithProject) => {
     setEditingId(keyword.id)
@@ -156,14 +158,21 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
     }
   }
 
-  const handleGenerateContent = async (keywordId: string, keyword: string) => {
-    setLoading(keywordId)
+  const handleGenerateContent = async (contentType: string, targetWordCount: number, includeHeroImage: boolean) => {
+    if (!generatingKeyword) return
+
+    setLoading(generatingKeyword.id)
 
     try {
       const response = await fetch('/api/content/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywordId }),
+        body: JSON.stringify({
+          keywordId: generatingKeyword.id,
+          contentType,
+          targetWordCount,
+          includeHeroImage,
+        }),
       })
 
       if (!response.ok) {
@@ -176,7 +185,7 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
         'toast',
         JSON.stringify({
           type: 'success',
-          message: `Content generated for "${keyword}"! View it on the Content page.`,
+          message: `Content generated for "${generatingKeyword.keyword}"! View it on the Content page.`,
         })
       )
 
@@ -333,7 +342,7 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
                         <HistoryIcon className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleGenerateContent(keyword.id, keyword.keyword)}
+                        onClick={() => setGeneratingKeyword(keyword)}
                         disabled={loading === keyword.id}
                         className="text-green-600 hover:text-green-900 disabled:opacity-50"
                         title="Generate content"
@@ -374,6 +383,21 @@ export function KeywordTable({ keywords: initialKeywords }: KeywordTableProps) {
           onClose={() => setHistoryKeyword(null)}
           keyword={historyKeyword.keyword}
           rankChecks={historyKeyword.rank_checks}
+        />
+      )}
+
+      {/* Generate Content Modal */}
+      {generatingKeyword && (
+        <GenerateContentModal
+          isOpen={generatingKeyword !== null}
+          onClose={() => {
+            if (loading !== generatingKeyword.id) {
+              setGeneratingKeyword(null)
+            }
+          }}
+          keyword={generatingKeyword.keyword}
+          onGenerate={handleGenerateContent}
+          isLoading={loading === generatingKeyword.id}
         />
       )}
     </div>

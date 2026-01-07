@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { keywordId, contentType, targetWordCount } = await request.json()
+    const { keywordId, contentType, targetWordCount, includeHeroImage } = await request.json()
 
     if (!keywordId) {
       return NextResponse.json(
@@ -69,7 +69,8 @@ export async function POST(request: Request) {
       keyword,
       domain,
       (contentType as ContentType) || 'blog_post',
-      targetWordCount || 1500
+      targetWordCount || 1500,
+      includeHeroImage !== false // Default to true if not specified
     )
 
     // Calculate word count
@@ -87,6 +88,7 @@ export async function POST(request: Request) {
         meta_description: result.meta_description,
         suggested_keywords: result.suggested_keywords,
         estimated_reading_time: result.estimated_reading_time,
+        hero_image_url: result.hero_image_url,
         word_count: wordCount,
         status: 'draft',
       })

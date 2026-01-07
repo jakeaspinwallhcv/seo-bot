@@ -10,6 +10,7 @@ export type GeneratedContentItem = {
   meta_description: string | null
   suggested_keywords: string[] | null
   estimated_reading_time: number | null
+  hero_image_url: string | null
   word_count: number | null
   status: string
   created_at: string
@@ -56,6 +57,7 @@ export async function getUserContent(
       title,
       content,
       word_count,
+      hero_image_url,
       status,
       created_at,
       updated_at,
@@ -83,6 +85,7 @@ export async function getUserContent(
     meta_description: item.meta_description || null,
     suggested_keywords: item.suggested_keywords || null,
     estimated_reading_time: item.estimated_reading_time || null,
+    hero_image_url: item.hero_image_url || null,
     keywords: Array.isArray(item.keywords) ? item.keywords[0] : item.keywords,
     projects: Array.isArray(item.projects) ? item.projects[0] : item.projects,
   }))
