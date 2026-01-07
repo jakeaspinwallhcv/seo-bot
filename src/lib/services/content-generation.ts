@@ -37,7 +37,7 @@ export async function generateContent(
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
+      model: 'claude-opus-4-5-20251101',
       max_tokens: 8192,
       temperature: 0.7,
       messages: [
@@ -195,7 +195,7 @@ Make it valuable, well-structured, and optimized for both search engines and AI 
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
+      model: 'claude-opus-4-5-20251101',
       max_tokens: 2048,
       temperature: 0.5,
       messages: [
