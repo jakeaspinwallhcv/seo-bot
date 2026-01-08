@@ -215,26 +215,10 @@ export function GenerateContentModal({
                 <span className="ml-3 text-sm text-gray-700">
                   <span className="font-medium">Generate AI hero image</span>
                   <span className="block text-xs text-gray-500 mt-0.5">
-                    Create a unique, photorealistic image using DALL-E 3 (~$0.04 per image). Uncheck if you have your own images.
+                    Uncheck if you have your own images.
                   </span>
                 </span>
               </label>
-            </div>
-
-            {/* Estimated Time */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Estimated generation time:</span>
-                <span className="font-medium text-gray-900">
-                  {wordCount >= 2000 ? '3-5 minutes' : wordCount >= 1000 ? '2-3 minutes' : '1-2 minutes'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm mt-2">
-                <span className="text-gray-600">Includes:</span>
-                <span className="font-medium text-gray-900">
-                  AI-generated hero image
-                </span>
-              </div>
             </div>
           </div>
 
