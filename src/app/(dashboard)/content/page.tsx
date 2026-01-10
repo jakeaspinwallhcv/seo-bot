@@ -54,6 +54,12 @@ export default async function ContentPage() {
                   Keywords
                 </a>
                 <a
+                  href="/analysis"
+                  className="inline-flex items-center px-3 py-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700"
+                >
+                  Analysis
+                </a>
+                <a
                   href="/ai-search"
                   className="inline-flex items-center px-3 py-2 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700"
                 >

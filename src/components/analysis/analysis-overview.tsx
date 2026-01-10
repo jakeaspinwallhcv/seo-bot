@@ -7,7 +7,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  ArrowPathIcon,
+  RefreshCw,
 } from 'lucide-react'
 
 type Analysis = {
@@ -106,7 +106,7 @@ export function AnalysisOverview({
               </h3>
               {analysis.status === 'in_progress' && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  <ArrowPathIcon className="h-3 w-3 mr-1 animate-spin" />
+                  <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
                   In Progress
                 </span>
               )}
@@ -129,12 +129,12 @@ export function AnalysisOverview({
           >
             {isAnalyzing ? (
               <>
-                <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 Starting...
               </>
             ) : (
               <>
-                <ArrowPathIcon className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Run New Analysis
               </>
             )}
