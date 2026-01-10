@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { AnalysisHeader } from '@/components/analysis/analysis-header'
+import { DashboardNav } from '@/components/layout/dashboard-nav'
 import { AnalysisOverview } from '@/components/analysis/analysis-overview'
 import { IssuesList } from '@/components/analysis/issues-list'
 import { PagesList } from '@/components/analysis/pages-list'
@@ -15,6 +15,13 @@ export default async function AnalysisPage() {
   if (!session) {
     redirect('/login')
   }
+
+  // Get user profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .single()
 
   // Get user's project
   const { data: projects } = await supabase
@@ -70,7 +77,11 @@ export default async function AnalysisPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header with navigation */}
-      <AnalysisHeader project={project} />
+      <DashboardNav
+        currentPage="analysis"
+        userEmail={session.user.email || ''}
+        profile={profile}
+      />
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
