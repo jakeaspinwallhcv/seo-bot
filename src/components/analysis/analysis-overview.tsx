@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
+  CheckCircle,
+  AlertTriangle,
+  Info,
   RefreshCw,
 } from 'lucide-react'
 

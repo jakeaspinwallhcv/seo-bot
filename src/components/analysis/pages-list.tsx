@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import {
-  CheckCircleIcon,
-  XCircleIcon,
-  ExternalLinkIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
+  CheckCircle,
+  XCircle,
+  ExternalLink,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 
 type Page = {
@@ -57,9 +57,9 @@ export function PagesList({ pages }: PagesListProps) {
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {expandedPage === page.id ? (
-                <ChevronDownIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
               ) : (
-                <ChevronRightIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0 text-left">
                 <div className="text-sm font-medium text-gray-900 truncate">
@@ -75,9 +75,9 @@ export function PagesList({ pages }: PagesListProps) {
                 {page.status_code}
               </span>
               {page.is_indexable ? (
-                <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-green-600" />
               ) : (
-                <XCircleIcon className="h-5 w-5 text-red-600" />
+                <XCircle className="h-5 w-5 text-red-600" />
               )}
             </div>
           </button>
@@ -218,7 +218,7 @@ export function PagesList({ pages }: PagesListProps) {
                   className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
                 >
                   View Page
-                  <ExternalLinkIcon className="h-4 w-4 ml-1" />
+                  <ExternalLink className="h-4 w-4 ml-1" />
                 </a>
               </div>
             </div>

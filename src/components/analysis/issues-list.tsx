@@ -1,9 +1,9 @@
 'use client'
 
 import {
-  ExclamationTriangleIcon,
-  ExclamationCircleIcon,
-  InformationCircleIcon,
+  AlertTriangle,
+  AlertCircle,
+  Info,
 } from 'lucide-react'
 
 type Issue = {
@@ -24,11 +24,11 @@ export function IssuesList({ issues }: IssuesListProps) {
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <ExclamationCircleIcon className="h-5 w-5 text-red-600" />
+        return <AlertCircle className="h-5 w-5 text-red-600" />
       case 'warning':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+        return <AlertTriangle className="h-5 w-5 text-yellow-600" />
       case 'info':
-        return <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+        return <Info className="h-5 w-5 text-blue-600" />
       default:
         return null
     }
