@@ -21,6 +21,28 @@ Run the migration in Supabase SQL Editor:
 **Why this matters:**
 Setting an immutable `search_path` prevents search path hijacking attacks where a malicious user could create objects in a schema that's earlier in the search path, potentially causing the function to execute unintended code.
 
+### RLS Performance Optimization
+
+**Status:** ✅ Fixed via migration
+
+**What was fixed:**
+- All 31 RLS policies optimized to use `(select auth.uid())` instead of `auth.uid()`
+- Added missing indexes on foreign keys: `projects.user_id`, `generated_content.keyword_id`
+
+**How to apply:**
+Run the migration in Supabase SQL Editor:
+```sql
+-- File: supabase/migrations/20260113000001_optimize_rls_performance.sql
+```
+
+**Why this matters:**
+Without the subselect wrapper, PostgreSQL re-evaluates `auth.uid()` for every row during query execution (O(n) complexity). Wrapping it in a subselect forces evaluation once per query (O(1) complexity), dramatically improving performance at scale. This is especially important for tables with thousands of rows.
+
+**Performance impact:**
+- Before: `auth.uid()` called N times (once per row)
+- After: `auth.uid()` called 1 time per query
+- Expected speedup: 10-100x for large result sets
+
 ## Auth Configuration
 
 ### Leaked Password Protection
