@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { analyzeWebsite } from '@/lib/services/website-analyzer'
+import { rateLimiters, getRateLimitHeaders } from '@/lib/rate-limiter'
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +15,22 @@ export async function POST(request: Request) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting - analysis operations (10 req/min per user)
+    const rateLimit = rateLimiters.analysis.check(user.id, 'analysis-start')
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many analysis requests. Please try again later.',
+          resetAt: rateLimit.resetAt,
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit),
+        }
+      )
     }
 
     const { projectId } = await request.json()
@@ -75,18 +92,28 @@ export async function POST(request: Request) {
     }
 
     // Start analysis in the background (don't await)
-    analyzeWebsite(project.domain, analysis.id, supabase).catch((error) => {
+    analyzeWebsite(project.domain, analysis.id, supabase).catch(async (error) => {
       console.error('Background analysis failed:', error)
+
       // Update analysis status to failed
-      supabase
-        .from('website_analyses')
-        .update({
-          status: 'failed',
-          error_message: error.message,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', analysis.id)
-        .then()
+      try {
+        const { error: updateError } = await supabase
+          .from('website_analyses')
+          .update({
+            status: 'failed',
+            error_message: error.message,
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', analysis.id)
+
+        if (updateError) {
+          console.error('Failed to update analysis status to failed:', updateError)
+        } else {
+          console.log(`Analysis ${analysis.id} marked as failed`)
+        }
+      } catch (updateError) {
+        console.error('Exception while updating analysis status:', updateError)
+      }
     })
 
     return NextResponse.json({

@@ -9,7 +9,7 @@ type Profile = {
 }
 
 type DashboardNavProps = {
-  currentPage: 'dashboard' | 'keywords' | 'analysis' | 'ai-search' | 'content'
+  currentPage: 'dashboard' | 'keywords' | 'analysis' | 'ai-search' | 'content' | 'settings'
   userEmail: string
   profile: Profile | null
 }
@@ -33,6 +33,7 @@ export function DashboardNav({
     { id: 'analysis', label: 'Analysis', href: '/analysis' },
     { id: 'ai-search', label: 'AI Search', href: '/ai-search' },
     { id: 'content', label: 'Content', href: '/content' },
+    { id: 'settings', label: 'Settings', href: '/settings' },
   ] as const
 
   return (

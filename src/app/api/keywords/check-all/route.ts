@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createDataForSEOClient } from '@/lib/services/dataforseo'
+import { rateLimiters, getRateLimitHeaders } from '@/lib/rate-limiter'
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +15,22 @@ export async function POST(request: Request) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting - expensive API operations (3 req/min per user)
+    const rateLimit = rateLimiters.expensive.check(user.id, 'keywords-check-all')
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many keyword ranking check requests. Please try again later.',
+          resetAt: rateLimit.resetAt,
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit),
+        }
+      )
     }
 
     // Get all user's projects

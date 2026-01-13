@@ -4,6 +4,7 @@ import { DashboardNav } from '@/components/layout/dashboard-nav'
 import { AnalysisOverview } from '@/components/analysis/analysis-overview'
 import { IssuesList } from '@/components/analysis/issues-list'
 import { PagesList } from '@/components/analysis/pages-list'
+import { StartAnalysisButton } from '@/components/analysis/start-analysis-button'
 
 export default async function AnalysisPage() {
   const supabase = await createClient()
@@ -146,15 +147,9 @@ export default async function AnalysisPage() {
                 Start your first SEO analysis to see comprehensive insights about your
                 website's performance.
               </p>
-              <form action="/api/analysis/start" method="POST" className="mt-6">
-                <input type="hidden" name="projectId" value={project.id} />
-                <button
-                  type="submit"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Start Analysis
-                </button>
-              </form>
+              <div className="mt-6">
+                <StartAnalysisButton projectId={project.id} />
+              </div>
             </div>
           </div>
         )}

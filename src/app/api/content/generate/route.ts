@@ -4,6 +4,7 @@ import {
   generateContent,
   type ContentType,
 } from '@/lib/services/content-generation'
+import { rateLimiters, getRateLimitHeaders } from '@/lib/rate-limiter'
 
 export async function POST(request: Request) {
   try {
@@ -17,6 +18,22 @@ export async function POST(request: Request) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limiting - expensive AI operations (3 req/min per user)
+    const rateLimit = rateLimiters.expensive.check(user.id, 'content-generate')
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many content generation requests. Please try again later.',
+          resetAt: rateLimit.resetAt,
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimit),
+        }
+      )
     }
 
     const { keywordId, contentType, targetWordCount, includeHeroImage } = await request.json()

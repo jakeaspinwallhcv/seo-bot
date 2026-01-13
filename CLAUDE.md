@@ -1,442 +1,364 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidelines for AI assistants (Claude Code) working on this codebase.
 
-## Project Overview
+## 📍 Start Here
 
-Multi-tenant SaaS application that helps real estate agents optimize their websites for both traditional search engines (Google, Bing) and modern AI chatbots (ChatGPT, Claude, Perplexity, Gemini). The system automatically analyzes websites daily, generates SEO-optimized content weekly, tracks keyword rankings, monitors backlinks, analyzes competitors, and surfaces improvement opportunities.
+**Before writing any code:**
+1. Read `plan.md` - Understand current priorities, known issues, and feature status
+2. Check `ai-seo-prd.md` - Reference for architecture, tech stack, and feature requirements
+3. Review existing code patterns - Maintain consistency with established patterns
 
-**Tech Stack:**
-- Backend: FastAPI (Python) + Celery + PostgreSQL + Redis
-- Frontend: React + TypeScript + Vite + Shadcn/ui + Tailwind CSS
-- AI: Anthropic Claude (analysis & content generation)
-- Deployment: Render.com
-
-## Common Commands
-
-### Local Development
+## 🛠️ Development Commands
 
 ```bash
-# Start all services (API, workers, database, Redis)
-docker-compose up -d
+# Development
+npm run dev              # Start Next.js dev server (localhost:3000)
+npm run type-check       # TypeScript type checking
+npm run lint             # ESLint checking
+npm run lint:fix         # Auto-fix linting issues
 
-# View logs
-docker-compose logs -f api
-docker-compose logs -f worker
+# Testing
+npm test                 # Run Jest tests
+npm test -- --watch      # Watch mode
+npm test -- --coverage   # Coverage report
 
-# Stop all services
-docker-compose down
-
-# Rebuild containers after dependency changes
-docker-compose up -d --build
+# Database
+# Migrations: Run SQL files in supabase/migrations/ via Supabase Dashboard
 ```
 
-### Backend Development
+## ✅ Code Quality Standards
 
-```bash
-cd backend
+### Always Do
+- ✅ Use TypeScript strict mode (no `any` types)
+- ✅ Validate ALL user input with Zod schemas
+- ✅ Check `plan.md` before starting work
+- ✅ Use `router.refresh()` for data updates (NOT `window.location.reload()`)
+- ✅ Extract repeated code into utilities/hooks
+- ✅ Use `next/image` for images (NOT `<img>`)
+- ✅ Add proper loading and error states
+- ✅ Use database transactions for multi-step operations
+- ✅ Check for private IPs in user-provided URLs
+- ✅ Set timeouts on regex operations and API calls
+- ✅ Update `plan.md` when discovering new issues
 
-# Install dependencies
-pip install -r requirements.txt
+### Never Do
+- ❌ Use `any` types (use `unknown` + type guards)
+- ❌ Skip input validation on API endpoints
+- ❌ Store sensitive data in localStorage
+- ❌ Use raw SQL queries (use Supabase client only)
+- ❌ Hard-code config values (use env vars)
+- ❌ Trust user input in regex without validation
+- ❌ Fetch URLs without SSRF checks
+- ❌ Fire-and-forget async without error handling
 
-# Run FastAPI dev server (with hot reload)
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+## 🔒 Security Checklist
 
-# Run single test file
-pytest tests/test_analysis_service.py -v
+**Every feature MUST address:**
 
-# Run all tests
-pytest
+1. **Authentication** - All API routes use `getUser()` (not `getSession()`)
+2. **Authorization** - Verify user owns resource before operations
+3. **Input Validation** - Zod schemas on all endpoints
+4. **RLS Policies** - Database enforces access control
+5. **SSRF Protection** - Block private IPs (`isPrivateIP()` check)
+6. **Injection Prevention** - Escape user input in AI prompts
+7. **Rate Limiting** - Applied to expensive operations
+8. **Timeout Protection** - All external calls timeout after max 30s
+9. **Regex Safety** - User patterns limited to 100 chars + timeout check
+10. **Transaction Safety** - Critical operations in DB transactions
 
-# Run tests with coverage
-pytest --cov=app --cov-report=html
+### High-Risk Vulnerabilities to Avoid
+- **SSRF**: Never fetch user URLs without IP validation
+- **SQL Injection**: Never use raw SQL with user input
+- **Regex DoS**: Timeout and validate user-provided patterns
+- **Race Conditions**: Use DB constraints for concurrency
+- **Prompt Injection**: Escape user input in AI prompts
 
-# Database migrations
-alembic revision --autogenerate -m "description"
-alembic upgrade head
-alembic downgrade -1
+## 🧪 Testing Requirements
 
-# Celery worker (local testing)
-celery -A app.workers.celery_app worker --loglevel=info
+### Required Tests for New Features
+1. **Unit Tests** - Individual functions and utilities (100% coverage)
+2. **Integration Tests** - API endpoints with database (80% minimum)
+3. **Security Tests** - Authentication, authorization, validation
+4. **Type Safety** - Zero TypeScript errors
 
-# Celery Beat scheduler (local testing)
-celery -A app.workers.celery_app beat --loglevel=info
+### What to Always Test
+- Authentication & authorization flows
+- Input validation & error handling
+- RLS policy enforcement
+- Boundary conditions (empty data, null, max limits)
+- Error paths (API failures, timeouts, invalid input)
+- Race conditions (concurrent operations)
 
-# Monitor Celery with Flower
-celery -A app.workers.celery_app flower --port=5555
-```
+## 🗄️ Database Migrations
 
-### Frontend Development
+### Before Creating a Migration
+1. Check existing schema - Read all migrations first
+2. Verify column usage - Grep codebase for references
+3. Match constraints - CHECK constraints = application logic
+4. Plan rollback - All migrations must be reversible
+5. Test with data - Run on copy of production data
 
-```bash
-cd frontend
+### Migration Checklist
+- [ ] All code-referenced columns exist in schema
+- [ ] CHECK constraints match Zod validation schemas
+- [ ] Foreign keys have proper ON DELETE behavior
+- [ ] Indexes on all frequently queried columns
+- [ ] RLS policies cover SELECT, INSERT, UPDATE, DELETE
+- [ ] Tested on staging before production
+- [ ] Can be rolled back without data loss
 
-# Install dependencies
-npm install
+## 🚀 Pre-Deployment Checklist
 
-# Run dev server (hot reload on http://localhost:5173)
-npm run dev
+- [ ] All tests passing
+- [ ] Type checking clean (`npm run type-check`)
+- [ ] Linting clean (`npm run lint`)
+- [ ] **All changes committed and pushed to GitHub**
+- [ ] No `console.log` in production code
+- [ ] Critical issues from `plan.md` resolved
+- [ ] Database migrations tested
+- [ ] Environment variables configured
+- [ ] Rate limiting enabled
+- [ ] Error tracking active
+- [ ] Monitoring alerts configured
 
-# Build for production
-npm run build
+## 💰 Cost Management
 
-# Preview production build
-npm run preview
+### AI API Cost Controls
+- Use prompt caching (30%+ savings)
+- Cache AI search results (24h TTL)
+- Rate limit per tier:
+  - Free: 1 content/month, 1 AI check/month
+  - Starter: 5 content/month, 10 AI checks/month
+  - Pro: 30 content/month, unlimited checks
+- Monitor daily costs in `api_usage` table
+- Alert if > $100/day
 
-# Lint
-npm run lint
+## 🔍 Common Patterns
 
-# Type check
-npm run type-check
-```
+### API Endpoint Structure
+```typescript
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { rateLimiters, getRateLimitHeaders } from '@/lib/rate-limiter'
+import { z } from 'zod'
 
-## Architecture
+const schema = z.object({
+  field: z.string().min(1).max(255)
+})
 
-### System Overview
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient()
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Frontend (React + TypeScript)               │
-│              Shadcn/ui + Tailwind CSS + Recharts             │
-└─────────────────────────────────────────────────────────────┘
-                            ↕ REST API
-┌─────────────────────────────────────────────────────────────┐
-│                   FastAPI Application                        │
-│   Auth | Website Analysis | Content Gen | Metrics           │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│              Celery Workers (Background Jobs)                │
-│   Daily Analysis | Weekly Content Gen | Metrics Collection  │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌───────────────┬──────────────┬──────────────┬──────────────┐
-│  PostgreSQL   │    Redis     │ Anthropic    │     S3       │
-│   (Data)      │ (Queue/Cache)│ Claude API   │  (Storage)   │
-└───────────────┴──────────────┴──────────────┴──────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│                    External Integrations                     │
-│  Google Search Console | Google Analytics | SEO APIs        │
-│  (Rankings & CTR)      | (Traffic Data)   | (Backlinks)     │
-└─────────────────────────────────────────────────────────────┘
-```
+    // 1. Auth check
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-### Multi-Tenancy Architecture
+    // 2. Rate limit check
+    const rateLimit = rateLimiters.standard.check(user.id, 'endpoint-name')
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+      )
+    }
 
-**Critical**: Every database table has a `tenant_id` column. All queries must be filtered by tenant context.
+    // 3. Input validation
+    const body = await request.json()
+    const validation = schema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: validation.error.issues },
+        { status: 400 }
+      )
+    }
 
-- JWT tokens include `tenant_id` claim
-- Middleware (`app/middleware/tenant_context.py`) sets tenant context per request
-- Application-level query filtering prevents cross-tenant data access
-- Database-level constraints enforce tenant isolation
+    // 4. Authorization check (verify ownership)
+    const { data: resource } = await supabase
+      .from('table')
+      .select('*')
+      .eq('id', validation.data.resourceId)
+      .eq('user_id', user.id)
+      .single()
 
-**Security pattern:**
-```python
-# All queries automatically filtered by tenant
-current_user = get_current_user(token)
-tenant_id = current_user.tenant_id
+    if (!resource) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
 
-# SQLAlchemy models inherit TenantMixin
-websites = db.query(Website).filter(Website.tenant_id == tenant_id).all()
-```
+    // 5. Business logic
+    // ...
 
-### Background Job System
-
-**Celery + Redis** handles all async operations:
-
-1. **Daily Tasks** (`app/workers/tasks/analysis_tasks.py`):
-   - Website crawling & SEO analysis
-   - Keyword rankings fetch (Google Search Console)
-   - Traffic metrics collection (Google Analytics)
-
-2. **Weekly Tasks** (`app/workers/tasks/content_tasks.py`):
-   - AI-powered content generation
-   - Backlink & competitor analysis
-   - Email notifications for pending approvals
-
-3. **Scheduling** (`app/workers/scheduler.py`):
-   - Celery Beat configuration
-   - Per-website schedules stored in `automation_schedules` table
-
-**Pattern:**
-```python
-# Tasks are defined in workers/tasks/
-@celery_app.task(bind=True, max_retries=3)
-def analyze_website_task(self, website_id: int, tenant_id: int):
-    # Task implementation
-    pass
-
-# Scheduled in scheduler.py
-celery_app.conf.beat_schedule = {
-    'daily-analysis': {
-        'task': 'app.workers.tasks.analysis_tasks.run_daily_analyses',
-        'schedule': crontab(hour=2, minute=0),  # 2 AM daily
-    },
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal error' },
+      { status: 500 }
+    )
+  }
 }
 ```
 
-### Web Crawling Strategy
+### SSRF Protection Pattern
+```typescript
+import { isPrivateIP } from '@/lib/services/website-analyzer'
 
-**Stack**: Playwright (JavaScript-enabled) + BeautifulSoup4 (parsing) + Trafilatura (text extraction)
+async function fetchUrl(url: string) {
+  const urlObj = new URL(url)
 
-- Max 50 pages per website (configurable in `crawler_service.py`)
-- 30-second timeout per page
-- 1 req/sec rate limit (respect robots.txt)
-- Headless browser for JavaScript-heavy sites
+  // CRITICAL: Check for private IPs
+  if (isPrivateIP(urlObj.hostname)) {
+    throw new Error(`Cannot access private IP: ${urlObj.hostname}`)
+  }
 
-**Critical files:**
-- `app/services/crawler_service.py` - Orchestrates crawling
-- `app/analyzers/technical_analyzer.py` - Technical SEO checks
-- `app/analyzers/content_analyzer.py` - Content quality analysis
-- `app/analyzers/mobile_analyzer.py` - Mobile optimization
-- `app/analyzers/ai_chatbot_analyzer.py` - AI chatbot optimization
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(30000) // 30s timeout
+  })
 
-### SEO Scoring System
-
-**Formula (0-100 scale):**
-```
-Overall Score = (Technical × 0.30) + (Content × 0.35) +
-                (Mobile × 0.20) + (AI Chatbot × 0.15)
-
-Technical (30%):    Meta tags, load times, broken links, HTTPS, canonical tags
-Content (35%):      Word count, readability, keyword usage, heading structure
-Mobile (20%):       Responsive design, mobile performance scores
-AI Chatbot (15%):   Schema.org markup, FAQ format, clear answers
+  return response
+}
 ```
 
-Implemented in `app/analyzers/scoring_engine.py`.
+### Regex Pattern Validation
+```typescript
+function validatePattern(pattern: string): void {
+  // 1. Length check
+  if (pattern.length > 100) {
+    throw new Error('Pattern too long (max 100 chars)')
+  }
 
-### AI Integration Pattern
+  // 2. Compilation timeout check
+  const startTime = Date.now()
+  const regex = new RegExp(pattern, 'i')
 
-**Anthropic Claude** powers analysis and content generation.
-
-```python
-# SEO Analysis - lower temperature for consistency
-response = await anthropic.messages.create(
-    model="claude-3-5-sonnet-20241022",
-    max_tokens=4096,
-    temperature=0.3,
-    messages=[{"role": "user", "content": analysis_prompt}]
-)
-
-# Content Generation - higher temperature for creativity
-response = await anthropic.messages.create(
-    model="claude-3-5-sonnet-20241022",
-    max_tokens=8192,
-    temperature=0.7,
-    messages=[{"role": "user", "content": content_prompt}]
-)
+  if (Date.now() - startTime > 100) {
+    throw new Error('Pattern too complex')
+  }
+}
 ```
 
-**Cost Optimization:**
-- Use prompt caching for repeated context (30-50% savings)
-- Track usage per tenant in `api_usage` table
-- Rate limiting prevents runaway costs (~$0.05-0.15 per analysis)
+## 🆘 When Stuck
 
-**Critical file:** `app/services/ai_service.py`
+1. **Check `plan.md`** - Known issues with solutions
+2. **Reference `ai-seo-prd.md`** - Architecture and design decisions
+3. **Review similar code** - Find patterns in existing files
+4. **Check tests** - See intended usage examples
+5. **Read migrations** - Understand schema evolution
 
-### Content Generation Workflow
+### Useful Search Commands
+```bash
+# Find API endpoints
+find src/app/api -name "route.ts"
 
-```
-Generate (AI) → Pending Approval → Approved/Rejected → Published
-```
+# Find component usage
+grep -r "ComponentName" src/
 
-- All content requires agent approval before publishing
-- Email notifications sent when new content ready
-- Built-in editor for modifications (`frontend/src/components/content/ContentEditor.tsx`)
-- Version control tracked in `content_items` table
+# Check for security issues
+grep -r "isPrivateIP\|matchesPattern\|rateLimiters" src/
 
-### Google Integrations (OAuth Flow)
-
-**Search Console & Analytics** use OAuth 2.0:
-
-1. User clicks "Connect Google Search Console"
-2. Redirect to Google OAuth consent screen
-3. User authorizes access to GSC/GA data
-4. Exchange authorization code for tokens
-5. Store encrypted refresh tokens in `integrations` table
-6. Background jobs use refresh tokens to fetch data daily
-
-**Implementation:**
-- `google-auth-oauthlib` library
-- Automatic token refresh when expired
-- Per-user OAuth (each agent connects their own accounts)
-- `app/services/gsc_service.py` - Google Search Console API
-- `app/services/analytics_service.py` - Google Analytics API
-
-### Database Schema
-
-**Core multi-tenant structure:**
-```
-tenants (organizations/agencies)
-  ├── users (real estate agents)
-  ├── websites (agent websites to monitor)
-  │     ├── website_analyses (SEO analysis results)
-  │     │     └── crawled_pages (individual page data)
-  │     ├── content_items (generated content)
-  │     ├── seo_metrics (time-series tracking)
-  │     ├── keyword_rankings (GSC keyword position data)
-  │     ├── backlinks (backlink profile data)
-  │     ├── competitors (competitor tracking)
-  │     ├── analytics_data (Google Analytics metrics)
-  │     ├── integrations (OAuth tokens for GSC/GA)
-  │     └── automation_schedules (daily/weekly jobs)
-  ├── job_executions (audit trail)
-  └── api_usage (cost monitoring)
+# View database schema
+cat supabase/migrations/*.sql | grep "CREATE TABLE"
 ```
 
-**Time-series optimization:**
-- Use table partitioning for `seo_metrics` and `keyword_rankings`
-- Daily snapshots enable historical trend analysis
+## 📋 Workflow
 
-## Project Structure
+### Feature Development
+1. Read `plan.md` - Check priorities and dependencies
+2. Create tests first - TDD for critical features
+3. Implement - Follow patterns above
+4. Run checks - `npm test && npm run type-check && npm run lint`
+5. **Commit changes** - Use conventional commits with Co-Authored-By line
+6. **Push to GitHub** - Backup work immediately after major features
+7. Update `plan.md` - Document new issues
 
-```
-seo-bot/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                      # FastAPI app entry
-│   │   ├── config.py                    # Configuration
-│   │   ├── api/v1/                      # API endpoints
-│   │   │   ├── auth.py                  # Authentication
-│   │   │   ├── websites.py              # Website management
-│   │   │   ├── analyses.py              # Analysis results
-│   │   │   ├── content.py               # Content generation
-│   │   │   └── metrics.py               # Metrics & dashboards
-│   │   ├── models/                      # SQLAlchemy models
-│   │   ├── schemas/                     # Pydantic schemas
-│   │   ├── services/
-│   │   │   ├── crawler_service.py       # Web crawling (Playwright)
-│   │   │   ├── analysis_service.py      # SEO analysis orchestration
-│   │   │   ├── ai_service.py            # Claude API integration
-│   │   │   ├── content_service.py       # Content generation
-│   │   │   ├── gsc_service.py           # Google Search Console API
-│   │   │   ├── analytics_service.py     # Google Analytics API
-│   │   │   ├── seo_api_service.py       # Ahrefs/SEMrush/Moz integration
-│   │   │   └── competitor_service.py    # Competitor tracking
-│   │   ├── analyzers/
-│   │   │   ├── technical_analyzer.py    # Technical SEO checks
-│   │   │   ├── content_analyzer.py      # Content quality
-│   │   │   ├── mobile_analyzer.py       # Mobile optimization
-│   │   │   ├── ai_chatbot_analyzer.py   # AI chatbot optimization
-│   │   │   └── scoring_engine.py        # Score calculation
-│   │   ├── workers/
-│   │   │   ├── celery_app.py            # Celery config
-│   │   │   ├── tasks/
-│   │   │   │   ├── analysis_tasks.py    # Daily analysis jobs
-│   │   │   │   ├── content_tasks.py     # Weekly content gen
-│   │   │   │   └── metrics_tasks.py     # Metrics collection
-│   │   │   └── scheduler.py             # Celery Beat schedule
-│   │   ├── core/
-│   │   │   └── security.py              # JWT auth, multi-tenancy
-│   │   └── middleware/
-│   │       └── tenant_context.py        # Tenant isolation
-│   ├── alembic/                         # DB migrations
-│   ├── Dockerfile                       # API container
-│   ├── Dockerfile.worker                # Worker container
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── Dashboard.tsx            # Main dashboard
-│   │   │   ├── Websites.tsx             # Website list
-│   │   │   ├── Analysis.tsx             # Analysis details
-│   │   │   └── Content.tsx              # Content approval queue
-│   │   ├── components/
-│   │   │   ├── dashboard/
-│   │   │   │   ├── ScoreGauge.tsx       # Score visualization
-│   │   │   │   └── TrendChart.tsx       # Metrics charts
-│   │   │   ├── analysis/
-│   │   │   │   └── AnalysisReport.tsx   # Analysis display
-│   │   │   └── content/
-│   │   │       └── ContentEditor.tsx    # Content editing
-│   │   └── services/
-│   │       └── api.ts                   # API client
-│   ├── package.json
-│   └── Dockerfile
-│
-├── docker-compose.yml                   # Local development
-└── render.yaml                          # Production deployment
+### Bug Fixes
+1. Add regression test first
+2. Fix minimal code to pass test
+3. Update `plan.md` with root cause
+4. Run full test suite
+
+## 🔄 Git Commit Guidelines
+
+### When to Commit
+
+**Commit after completing:**
+1. **Major features** - Any substantial new functionality (e.g., billing system, new page, major component)
+2. **Security fixes** - Critical security patches or vulnerability fixes
+3. **Database migrations** - After creating and testing a migration file
+4. **Bug fixes** - After fixing a reported issue and adding tests
+5. **Refactoring** - After completing a significant code cleanup
+
+**Commit message format:**
+```bash
+git add .
+git commit -m "feat: add billing page with Stripe integration
+
+- Implement checkout flow
+- Add subscription management
+- Enforce usage limits
+- Add tests for payment flows
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ```
 
-## Environment Variables
+**Commit message types:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `refactor:` - Code restructuring without behavior change
+- `test:` - Adding or updating tests
+- `docs:` - Documentation updates
+- `chore:` - Maintenance tasks (deps, config)
+- `security:` - Security fixes
+
+### When to Push
+
+**Push to GitHub after:**
+1. **Every major feature commit** - Don't let work sit locally
+2. **Before switching tasks** - Ensure work is backed up
+3. **End of work session** - Push all commits before stepping away
+4. **After fixing critical bugs** - Get fixes backed up immediately
+
+**Push command:**
+```bash
+git push origin main
+```
+
+### DO NOT Commit
+- ❌ Broken code that doesn't compile
+- ❌ Code with failing tests
+- ❌ Sensitive data (API keys, passwords, tokens)
+- ❌ Large binary files without Git LFS
+- ❌ node_modules or build artifacts
+- ❌ Half-finished features (use branches instead)
+
+### Example Workflow
 
 ```bash
-# Core Application
-SECRET_KEY=<jwt-secret-key>
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
+# After completing a feature
+git status                    # Review changes
+npm test                      # Ensure tests pass
+npm run type-check            # Verify TypeScript
+git add .                     # Stage changes
+git commit -m "feat: ..."     # Commit with message
+git push origin main          # Push to GitHub
 
-# AI Provider
-ANTHROPIC_API_KEY=<your-claude-api-key>
-
-# Google APIs (OAuth credentials)
-GOOGLE_CLIENT_ID=<google-oauth-client-id>
-GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
-GOOGLE_REDIRECT_URI=https://yourapp.com/api/v1/auth/google/callback
-
-# SEO API (choose one)
-SEMRUSH_API_KEY=<semrush-api-key>
-# OR
-AHREFS_API_KEY=<ahrefs-api-key>
-# OR
-MOZ_ACCESS_ID=<moz-access-id>
-MOZ_SECRET_KEY=<moz-secret-key>
-
-# Optional: For chatbot visibility testing
-OPENAI_API_KEY=<openai-api-key>
-GEMINI_API_KEY=<google-gemini-api-key>
-
-# Email (for notifications)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=<email>
-SMTP_PASSWORD=<app-password>
+# Update plan.md if needed
+# Document any new issues discovered
 ```
 
-## AI Chatbot Optimization
+## 📖 Key Files Reference
 
-**Why it matters:** AI chatbots (ChatGPT, Claude, Gemini, Perplexity) are becoming primary search tools. Optimization differs from traditional SEO.
+- `plan.md` - Current status, issues, priorities, feature gaps
+- `ai-seo-prd.md` - Product requirements, architecture, design
+- `PROJECT_STATUS.md` - Completed features and known limitations
+- `TODO.md` - Future features roadmap
+- `src/lib/rate-limiter.ts` - Rate limiting implementation
+- `src/lib/services/website-analyzer.ts` - Crawler with security patterns
+- `supabase/migrations/` - Database schema evolution
 
-**Key factors analyzed:**
-1. **Structured Data**: Schema.org markup (RealEstateAgent, LocalBusiness, FAQPage)
-2. **FAQ Format**: Q&A structure that chatbots can extract
-3. **Clear Hierarchy**: Proper H1 → H6 heading structure
-4. **Authoritative Content**: Credentials, local expertise, data/statistics
-5. **Natural Language**: Conversational tone, answers common questions
-6. **Entity Recognition**: Clear mentions of locations, services, specialties
+---
 
-**Analyzer:** `app/analyzers/ai_chatbot_analyzer.py`
-
-## Security Considerations
-
-1. **Authentication**: JWT tokens with 24-hour expiration
-2. **Password Hashing**: bcrypt with high cost factor
-3. **Rate Limiting**: 100 req/min per user, 10 req/min for analysis endpoints
-4. **Input Validation**: All API inputs validated via Pydantic schemas
-5. **CORS**: Restricted to frontend domain only in production
-6. **HTTPS Only**: Force HTTPS redirects in production
-7. **SQL Injection**: SQLAlchemy ORM only (no raw SQL queries)
-8. **Secrets Management**: Environment variables, never commit API keys
-
-## Performance Targets
-
-- API response time < 200ms (p95)
-- Website analysis completion < 5 minutes for 50-page site
-- Background job success rate > 95%
-- System uptime > 99.5%
-
-## Cost Estimates (100 customers)
-
-**AI API Costs (Claude):**
-- Daily analysis: $150-450/month
-- Weekly content generation: $40-100/month
-- Total: ~$200-550/month
-
-**Infrastructure (Render):**
-- Web + Worker + PostgreSQL + Redis: ~$30-100/month
-
-**SEO API (SEMrush):**
-- ~$200/month for API access
+**Remember:** Every change should maintain code quality, include tests, and prioritize security. When in doubt, check `plan.md` first.
