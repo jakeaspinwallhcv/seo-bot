@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import * as cheerio from 'cheerio'
+import { createServiceClient } from '@/lib/supabase/service'
 
 type CrawledPage = {
   url: string
@@ -457,9 +458,12 @@ async function extractLinks(
 export async function analyzeWebsite(
   domain: string,
   analysisId: string,
-  supabase: SupabaseClient
+  _unusedSupabase?: SupabaseClient
 ): Promise<void> {
   console.log(`Starting analysis for ${domain}`)
+
+  // Create service client for background operations (bypasses RLS)
+  const supabase = createServiceClient()
 
   try {
     // Ensure domain has protocol
@@ -522,10 +526,14 @@ export async function analyzeWebsite(
       allIssues.push(...pageIssues)
 
       // Store crawled page in database
-      await supabase.from('crawled_pages').insert({
+      const { error: pageError } = await supabase.from('crawled_pages').insert({
         analysis_id: analysisId,
         ...page,
       })
+
+      if (pageError) {
+        console.error('Error inserting crawled page:', pageError)
+      }
     }
 
     // Calculate scores
@@ -533,10 +541,14 @@ export async function analyzeWebsite(
 
     // Store issues in database
     for (const issue of allIssues) {
-      await supabase.from('seo_issues').insert({
+      const { error: issueError } = await supabase.from('seo_issues').insert({
         analysis_id: analysisId,
         ...issue,
       })
+
+      if (issueError) {
+        console.error('Error inserting issue:', issueError)
+      }
     }
 
     // Count issues by severity
@@ -544,7 +556,7 @@ export async function analyzeWebsite(
     const warnings = allIssues.filter((i) => i.severity === 'warning').length
 
     // Update analysis with results
-    await supabase
+    const { error: updateError } = await supabase
       .from('website_analyses')
       .update({
         status: 'completed',
@@ -557,7 +569,12 @@ export async function analyzeWebsite(
       })
       .eq('id', analysisId)
 
-    console.log(`Analysis completed for ${domain}`)
+    if (updateError) {
+      console.error('Error updating analysis status:', updateError)
+      throw updateError
+    }
+
+    console.log(`Analysis completed for ${domain} - ${pages.length} pages, ${allIssues.length} issues`)
   } catch (error) {
     console.error('Analysis failed:', error)
     throw error
