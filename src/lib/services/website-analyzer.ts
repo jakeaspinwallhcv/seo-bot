@@ -489,13 +489,15 @@ export async function analyzeWebsite(
       .eq('id', analysis.project_id)
       .single()
 
-    const settings: CrawlerSettings = project?.crawler_settings || {
-      maxPages: MAX_PAGES,
-      timeoutMs: TIMEOUT_MS,
-      rateLimitMs: RATE_LIMIT_MS,
-      respectRobotsTxt: true,
-      followNofollowLinks: false,
-      crawlStrategy: 'breadth_first',
+    // Transform database snake_case to TypeScript camelCase
+    const dbSettings = project?.crawler_settings as any
+    const settings: CrawlerSettings = {
+      maxPages: dbSettings?.max_pages ?? MAX_PAGES,
+      timeoutMs: dbSettings?.timeout_ms ?? TIMEOUT_MS,
+      rateLimitMs: dbSettings?.rate_limit_ms ?? RATE_LIMIT_MS,
+      respectRobotsTxt: dbSettings?.respect_robots_txt ?? true,
+      followNofollowLinks: dbSettings?.follow_nofollow_links ?? false,
+      crawlStrategy: dbSettings?.crawl_strategy ?? 'breadth_first',
     }
 
     console.log('Crawler settings:', JSON.stringify(settings, null, 2))
