@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getDashboardStats, getRecentActivity } from '@/lib/api/dashboard'
+import { getDashboardStats, getRecentActivity, getRankTrendData } from '@/lib/api/dashboard'
 import { DashboardNav } from '@/components/layout/dashboard-nav'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { RankTrendChart } from '@/components/dashboard/rank-trend-chart'
@@ -33,6 +33,7 @@ export default async function DashboardPage() {
   // Fetch dashboard data
   const stats = await getDashboardStats(session.user.id)
   const activities = await getRecentActivity(session.user.id, 10)
+  const rankTrendData = await getRankTrendData(session.user.id)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
                 </h3>
                 <span className="text-xs text-gray-500">Last 30 days</span>
               </div>
-              <RankTrendChart data={[]} />
+              <RankTrendChart data={rankTrendData} />
             </div>
           </div>
 

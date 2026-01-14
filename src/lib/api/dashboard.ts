@@ -16,6 +16,11 @@ export type ActivityItem = {
   timestamp: string
 }
 
+export type RankTrendData = {
+  date: string // Format: "2025-01-13" (YYYY-MM-DD)
+  rank: number // Average rank for that day
+}
+
 /**
  * Fetch dashboard statistics
  * Security: All queries filtered by user_id via RLS policies
@@ -212,4 +217,67 @@ export async function getRecentActivity(
   return activities
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit)
+}
+
+/**
+ * Fetch rank trend data for last 30 days
+ * Security: All queries filtered by user_id via RLS policies
+ */
+export async function getRankTrendData(userId: string): Promise<RankTrendData[]> {
+  const supabase = await createClient()
+
+  // Get user's projects
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('user_id', userId)
+
+  const projectIds = projects?.map((p) => p.id) || []
+  if (projectIds.length === 0) return []
+
+  // Get keywords for these projects
+  const { data: keywords } = await supabase
+    .from('keywords')
+    .select('id')
+    .in('project_id', projectIds)
+
+  const keywordIds = keywords?.map((k) => k.id) || []
+  if (keywordIds.length === 0) return []
+
+  // Fetch rank checks from last 30 days
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const { data: rankChecks } = await supabase
+    .from('rank_checks')
+    .select('rank, checked_at')
+    .in('keyword_id', keywordIds)
+    .not('rank', 'is', null)
+    .gte('checked_at', thirtyDaysAgo.toISOString())
+    .order('checked_at', { ascending: true })
+
+  if (!rankChecks || rankChecks.length === 0) return []
+
+  // Group by date and calculate average rank per day
+  const ranksByDate = new Map<string, number[]>()
+
+  rankChecks.forEach((check) => {
+    const date = check.checked_at.split('T')[0]
+    if (!ranksByDate.has(date)) {
+      ranksByDate.set(date, [])
+    }
+    ranksByDate.get(date)!.push(check.rank)
+  })
+
+  // Calculate averages
+  const trendData: RankTrendData[] = []
+  ranksByDate.forEach((ranks, date) => {
+    const averageRank = Math.round(
+      ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length
+    )
+    trendData.push({ date, rank: averageRank })
+  })
+
+  // Sort by date ascending
+  return trendData.sort((a, b) => a.date.localeCompare(b.date))
 }

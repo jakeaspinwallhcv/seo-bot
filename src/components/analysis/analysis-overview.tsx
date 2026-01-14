@@ -9,6 +9,7 @@ import {
   Info,
   RefreshCw,
 } from 'lucide-react'
+import { AnalysisStatusListener } from './analysis-status-listener'
 
 type Analysis = {
   id: string
@@ -96,6 +97,12 @@ export function AnalysisOverview({
 
   return (
     <div className="space-y-6">
+      {/* Add invisible real-time listener */}
+      <AnalysisStatusListener
+        analysisId={analysis.id}
+        initialStatus={analysis.status as 'in_progress' | 'completed' | 'failed'}
+      />
+
       {/* Header with action button */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
