@@ -625,8 +625,12 @@ async function crawlWebsite(
 
     // Skip if excluded by patterns
     if (isUrlExcluded(normalizedUrl, exclusionPatterns)) {
-      console.log(`Excluded by pattern: ${normalizedUrl}`)
+      // Find which pattern matched
+      const matchedPattern = exclusionPatterns.find(p => matchesPattern(normalizedUrl, p))
+      console.log(`❌ Excluded by pattern "${matchedPattern}": ${normalizedUrl}`)
       continue
+    } else {
+      console.log(`✅ Crawling: ${normalizedUrl}`)
     }
 
     // Skip if disallowed by robots.txt
