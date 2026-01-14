@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 type AnalysisStatusListenerProps = {
   analysisId: string
@@ -10,7 +9,7 @@ type AnalysisStatusListenerProps = {
 }
 
 /**
- * Client component that subscribes to analysis status changes
+ * Client component that polls analysis status
  * and refreshes the page when analysis completes
  */
 export function AnalysisStatusListener({
@@ -18,45 +17,56 @@ export function AnalysisStatusListener({
   initialStatus,
 }: AnalysisStatusListenerProps) {
   const router = useRouter()
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Don't subscribe if already completed/failed
+    // Don't poll if already completed/failed
     if (initialStatus === 'completed' || initialStatus === 'failed') {
       return
     }
 
-    const supabase = createClient()
+    console.log(`Starting status polling for analysis ${analysisId}`)
 
-    console.log(`Subscribing to analysis ${analysisId} status updates`)
+    // Poll status every 3 seconds
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/analysis/status/${analysisId}`)
 
-    // Subscribe to changes on this specific analysis
-    const channel = supabase
-      .channel(`analysis-${analysisId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'website_analyses',
-          filter: `id=eq.${analysisId}`,
-        },
-        (payload) => {
-          console.log('Analysis status changed:', payload)
-
-          const newStatus = payload.new.status
-
-          if (newStatus === 'completed' || newStatus === 'failed') {
-            console.log(`Analysis ${analysisId} ${newStatus}, refreshing page`)
-            router.refresh()
-          }
+        if (!response.ok) {
+          console.error('Status check failed:', response.status)
+          return
         }
-      )
-      .subscribe()
 
-    // Cleanup subscription on unmount
+        const data = await response.json()
+
+        if (data.status === 'completed' || data.status === 'failed') {
+          console.log(`Analysis ${analysisId} ${data.status}, refreshing page`)
+
+          // Stop polling
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current)
+            intervalRef.current = null
+          }
+
+          // Refresh page to show new data
+          router.refresh()
+        }
+      } catch (error) {
+        console.error('Error checking analysis status:', error)
+      }
+    }
+
+    // Start polling immediately, then every 3 seconds
+    checkStatus()
+    intervalRef.current = setInterval(checkStatus, 3000)
+
+    // Cleanup on unmount
     return () => {
-      console.log(`Unsubscribing from analysis ${analysisId}`)
-      supabase.removeChannel(channel)
+      if (intervalRef.current) {
+        console.log(`Stopping status polling for analysis ${analysisId}`)
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
     }
   }, [analysisId, initialStatus, router])
 
