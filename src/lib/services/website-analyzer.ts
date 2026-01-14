@@ -498,6 +498,8 @@ export async function analyzeWebsite(
       crawlStrategy: 'breadth_first',
     }
 
+    console.log('Crawler settings:', JSON.stringify(settings, null, 2))
+
     // Get exclusion patterns
     const { data: patternsData } = await supabase
       .from('crawler_exclusion_patterns')
@@ -610,6 +612,9 @@ async function crawlWebsite(
 
   console.log('Starting crawl with BFS strategy...')
   console.log(`Queue has ${urlQueue.length} URLs to process`)
+  console.log(`Max pages setting: ${settings.maxPages}`)
+  console.log(`Crawled pages so far: ${crawledPages.length}`)
+  console.log(`Will crawl? ${urlQueue.length > 0 && crawledPages.length < settings.maxPages}`)
 
   let skippedAlreadyProcessed = 0
   let skippedDifferentDomain = 0
