@@ -3,9 +3,12 @@ import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { id } = await params
+
     const supabase = await createClient()
 
     // Authenticate user
@@ -22,7 +25,7 @@ export async function GET(
     const { data: analysis, error } = await supabase
       .from('website_analyses')
       .select('status, completed_at, pages_crawled, total_issues')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error || !analysis) {
@@ -33,7 +36,7 @@ export async function GET(
     const { data: analysisWithProject } = await supabase
       .from('website_analyses')
       .select('project_id, projects(user_id)')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (
