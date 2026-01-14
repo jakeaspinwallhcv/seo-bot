@@ -609,35 +609,50 @@ async function crawlWebsite(
   const rateLimitMs = robotsRules?.crawlDelay || settings.rateLimitMs
 
   console.log('Starting crawl with BFS strategy...')
+  console.log(`Queue has ${urlQueue.length} URLs to process`)
+
+  let skippedAlreadyProcessed = 0
+  let skippedDifferentDomain = 0
+  let skippedExcluded = 0
+  let skippedRobots = 0
+
   while (urlQueue.length > 0 && crawledPages.length < settings.maxPages) {
     const url = urlQueue.shift()!
     const normalizedUrl = normalizeUrl(url, baseUrl)
 
+    console.log(`\n[${crawledPages.length + 1}] Processing: ${url}`)
+    console.log(`   Normalized: ${normalizedUrl}`)
+
     // Skip if already processed
     if (crawledUrls.has(normalizedUrl) || failedUrls.has(normalizedUrl)) {
+      console.log(`   ⏭️  SKIP: Already processed`)
+      skippedAlreadyProcessed++
       continue
     }
 
     // Skip if not same domain
     if (!isSameDomain(normalizedUrl, baseUrl)) {
+      console.log(`   ⏭️  SKIP: Different domain`)
+      skippedDifferentDomain++
       continue
     }
 
     // Skip if excluded by patterns
     if (isUrlExcluded(normalizedUrl, exclusionPatterns)) {
-      // Find which pattern matched
       const matchedPattern = exclusionPatterns.find(p => matchesPattern(normalizedUrl, p))
-      console.log(`❌ Excluded by pattern "${matchedPattern}": ${normalizedUrl}`)
+      console.log(`   ⏭️  SKIP: Excluded by pattern "${matchedPattern}"`)
+      skippedExcluded++
       continue
-    } else {
-      console.log(`✅ Crawling: ${normalizedUrl}`)
     }
 
     // Skip if disallowed by robots.txt
     if (robotsRules && !isAllowedByRobots(normalizedUrl, robotsRules, baseUrl)) {
-      console.log(`Disallowed by robots.txt: ${normalizedUrl}`)
+      console.log(`   ⏭️  SKIP: Disallowed by robots.txt`)
+      skippedRobots++
       continue
     }
+
+    console.log(`   ✅ CRAWLING!`)
 
     crawledUrls.add(normalizedUrl)
 
@@ -688,7 +703,15 @@ async function crawlWebsite(
     }
   }
 
-  console.log(`Crawl complete: ${crawledPages.length} pages, ${failedUrls.size} failures`)
+  console.log(`\n========================================`)
+  console.log(`Crawl complete!`)
+  console.log(`  ✅ Crawled: ${crawledPages.length} pages`)
+  console.log(`  ❌ Failed: ${failedUrls.size} pages`)
+  console.log(`  ⏭️  Skipped (already processed): ${skippedAlreadyProcessed}`)
+  console.log(`  ⏭️  Skipped (different domain): ${skippedDifferentDomain}`)
+  console.log(`  ⏭️  Skipped (exclusion pattern): ${skippedExcluded}`)
+  console.log(`  ⏭️  Skipped (robots.txt): ${skippedRobots}`)
+  console.log(`========================================\n`)
   return crawledPages
 }
 
